@@ -1,0 +1,6 @@
+[submodule "libraries/EncButton"]
+	path = libraries/EncButton
+	url = https://github.com/GyverLibs/EncButton
+[submodule "libraries/GyverOLED"]
+	path = libraries/GyverOLED
+	url = https://github.com/GyverLibs/GyverOLED
