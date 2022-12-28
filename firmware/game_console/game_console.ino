@@ -1,21 +1,16 @@
 #include "controls.hpp"
 #include "display.hpp"
+#include "games.hpp"
 #include "menu.hpp"
 
-#define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
+// Меню с выбором игр
+Menu main_menu = Menu(
+  reinterpret_cast<const __FlashStringHelper* const*>(games_names),
+  games_count
+);
 
-const char item_1[] PROGMEM = "Змейка";
-const char item_2[] PROGMEM = "Pong";
-const char item_3[] PROGMEM = "Dino";
-const char item_4[] PROGMEM = "Тетрис";
-
-const char title[] PROGMEM = "Игра";
-
-const __FlashStringHelper* items[] = {
-  FPSTR(item_1), FPSTR(item_2), FPSTR(item_3), FPSTR(item_4)
-};
-
-Menu main_menu = Menu(items, 4, FPSTR(title));
+// Текущая запущенная игра
+Game* current_game = nullptr;
 
 void setup() {
   Serial.begin(9600);
@@ -28,5 +23,17 @@ void loop() {
   // Обновляем ввод
   controls::update();
 
-  main_menu.update();
+  if (current_game == nullptr) {
+    // Отрисовываем текущее меню, если не запущена игра
+    main_menu.update();
+
+    // Обрабатываем запуск игры
+    if (main_menu.clickedItem() != -1) {
+      current_game = games[main_menu.clickedItem()]();
+
+      main_menu.handleClickedItem();
+    }
+  } else {
+    current_game->update();
+  }
 }
