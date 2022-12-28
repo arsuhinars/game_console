@@ -30,8 +30,13 @@ Menu::Menu(
 Menu::~Menu() { }
 
 void Menu::update() {
+  // Ждем пока не будет обработан нажатый элемент
+  if (_is_item_clicked) {
+    return;
+  }
+
   // Обрабатываем нажатие вверх
-  if (controls::up_button.press() && _selected_item > 0) {
+  if (controls::up_button.click() && _selected_item > 0) {
     if (_selected_item == _items_scroll) {
       --_items_scroll;
     }
@@ -41,7 +46,7 @@ void Menu::update() {
   }
 
   // Обрабатываем нажатие вниз
-  if (controls::down_button.press() && _selected_item < _items_count - 1) {
+  if (controls::down_button.click() && _selected_item < _items_count - 1) {
     uint8_t max_display_items = 
       _title != nullptr ? 
       (DISPLAY_HEIGHT - MENU_TITLE_HEIGHT - 1) / MENU_ITEM_HEIGHT + 1 :
@@ -55,24 +60,30 @@ void Menu::update() {
     _need_redraw = true;
   }
 
+  // Обрабатываем выбор элемента
+  if (controls::button_a.click()) {
+    _is_item_clicked = true;
+  }
+
   // Делаем отрисовку только при необходимости
   if (!_need_redraw) {
     return;
   }
   _need_redraw = false;
 
-  // Очищаем дисплей и сбрасываем состояния
-  display::oled.clear();
   display::oled.textMode(BUF_REPLACE);
 
   int item_y = 0;
 
   if (_title != nullptr) {
     size_t title_length = rus_strlen_P(reinterpret_cast<PGM_P>(_title));
+    int title_x = DISPLAY_WIDTH / 2 - title_length * 6;
 
     // Отрисовываем заголовок
     display::oled.setScale(2);
-    display::oled.setCursorXY(DISPLAY_WIDTH / 2 - title_length * 6, 0);
+    display::oled.clear(0, 0, title_x - 1, MENU_TITLE_HEIGHT - 1);
+    display::oled.clear(title_x + title_length * 12, 0, DISPLAY_WIDTH - 1, MENU_TITLE_HEIGHT - 1);
+    display::oled.setCursorXY(title_x, 0);
     display::oled.print(_title);
 
     item_y = MENU_TITLE_HEIGHT;
@@ -84,6 +95,8 @@ void Menu::update() {
     size_t item_length = rus_strlen_P(reinterpret_cast<PGM_P>(_items[i]));
     int item_x = DISPLAY_WIDTH / 2 - item_length * 3;
 
+    display::oled.clear(0, item_y, item_x - 1, item_y + MENU_ITEM_HEIGHT - 1);
+    display::oled.clear(item_x + item_length * 6, item_y, DISPLAY_WIDTH - 1, item_y + MENU_ITEM_HEIGHT - 1);
     display::oled.setCursorXY(item_x, item_y);
     display::oled.print(_items[i]);
 
