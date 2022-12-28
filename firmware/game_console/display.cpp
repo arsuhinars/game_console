@@ -4,4 +4,5 @@ const display::OLED display::oled;
 
 void display::init() {
   oled.init();
+  oled.clear();
 }
