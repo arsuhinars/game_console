@@ -41,7 +41,11 @@ void loop() {
 
       main_menu.handleClickedItem();
     }
-  } else {
-    current_game->update();
+  } else if (!current_game->update()) {
+    // Освобождаем память, если игра была закрыта
+    delete current_game;
+    current_game = nullptr;
+
+    main_menu.forceRedraw();
   }
 }
