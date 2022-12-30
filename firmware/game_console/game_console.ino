@@ -15,6 +15,14 @@ Game* current_game = nullptr;
 void setup() {
   Serial.begin(9600);
 
+  // Настраиваем ПГСЧ с помощью аппаратного источника шума
+  uint32_t seed = 0;
+  for (uint8_t i = 0; i < 16; i++) {
+    seed *= 4;
+    seed += analogRead(A0) & 3;
+  }
+  randomSeed(seed);
+
   // Инициализируем экран 
   display::init();
 }
