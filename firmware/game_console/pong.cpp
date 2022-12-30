@@ -145,8 +145,16 @@ bool Pong::update() {
 
         int16_t right_racket_accel = 0;
         if (_game_data.type == GameType::ONE_PLAYER) {
+          int16_t target_y = _ball_y;
+          if (_ball_x / SUBPIXELS_COUNT < DISPLAY_WIDTH * 3 / 4) {
+            target_y = DISPLAY_HEIGHT * SUBPIXELS_COUNT - _ball_y;
+          }
+
           // Если игра в одиночку, то правая ракетка управляется псевдо ИИ
-          ;
+          right_racket_accel = 
+            _right_racket_pos > target_y ?
+            -RACKET_ACCEL :
+            RACKET_ACCEL;
         }
         // Если игра вдвоем
         else if (controls::button_b.state()) {
@@ -293,8 +301,8 @@ void Pong::startNewRound() {
 
   _ball_x = DISPLAY_WIDTH / 2 * SUBPIXELS_COUNT;
   _ball_y = DISPLAY_HEIGHT  / 2 * SUBPIXELS_COUNT;
-  _ball_vel_x = random(BALL_MAX_SPEED / 2, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
-  _ball_vel_y = random(BALL_MAX_SPEED / 2, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
+  _ball_vel_x = random(BALL_MAX_SPEED / 5, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
+  _ball_vel_y = random(BALL_MAX_SPEED / 5, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
   if (random(2)) {
     _ball_vel_x *= -1;
   }
