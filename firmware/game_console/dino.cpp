@@ -5,7 +5,7 @@ Dino::Dino() {
 
 }
 
-void Dino::update() {
+bool Dino::update() {
   display::oled.home();
   display::oled.print("Dino");
 }

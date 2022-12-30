@@ -5,7 +5,7 @@ Snake::Snake() {
 
 }
 
-void Snake::update() {
+bool Snake::update() {
   display::oled.home();
   display::oled.print("Snake");
 }
