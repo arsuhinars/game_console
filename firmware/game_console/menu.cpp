@@ -20,11 +20,13 @@ const uint8_t chevron_left[] PROGMEM = {
 Menu::Menu(
   const __FlashStringHelper** items,
   uint8_t items_count,
-  const __FlashStringHelper* title
+  const __FlashStringHelper* title,
+  uint8_t title_scale
 ) {
   _items = items;
   _items_count = items_count;
   _title = title;
+  _title_scale = title_scale;
 }
 
 Menu::~Menu() { }
@@ -77,10 +79,10 @@ void Menu::update() {
 
   if (_title != nullptr) {
     size_t title_length = rus_strlen_P(reinterpret_cast<PGM_P>(_title));
-    int title_x = DISPLAY_WIDTH / 2 - title_length * 6;
+    int title_x = DISPLAY_WIDTH / 2 - title_length * 3 * _title_scale;
 
     // Отрисовываем заголовок
-    display::oled.setScale(2);
+    display::oled.setScale(_title_scale);
     display::oled.clear(0, 0, title_x - 1, MENU_TITLE_HEIGHT - 1);
     display::oled.clear(title_x + title_length * 12, 0, DISPLAY_WIDTH - 1, MENU_TITLE_HEIGHT - 1);
     display::oled.setCursorXY(title_x, 0);
@@ -122,6 +124,9 @@ void Menu::update() {
     }
   }
 
+  // Очищаем оставшуюся часть
+  display::oled.clear(0, item_y, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
+
   // Обновляем дисплей
   display::oled.update();
 }
@@ -132,4 +137,8 @@ int Menu::clickedItem() {
 
 void Menu::handleClickedItem() {
   _is_item_clicked = false;
+}
+
+void Menu::forceRedraw() {
+  _need_redraw = true;
 }
