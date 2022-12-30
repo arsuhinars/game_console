@@ -5,6 +5,8 @@
 #include "pong.hpp"
 #include "dino.hpp"
 
+#include "texts.hpp"
+
 // Массив, содержащий все игры
 const GameBuilder games[] = {
   // addGame<КЛАСС ИГРЫ>(),
@@ -15,7 +17,9 @@ const GameBuilder games[] = {
 
 // Массив с названиями игр
 const char* const games_names[] = {
-  SNAKE_NAME, PONG_NAME, DINO_NAME
+  texts::SNAKE_NAME,
+  texts::PONG_NAME,
+  texts::DINO_NAME
 };
 
 const uint8_t games_count = sizeof(games) / sizeof(GameBuilder);
