@@ -28,4 +28,7 @@ namespace controls {
   * выводит отладочные сообщения.
   */
   void update();
+
+  /// Функция сброса состояния всех кнопок.
+  void resetStates();
 } // namespace controls

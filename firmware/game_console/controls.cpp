@@ -82,3 +82,12 @@ void controls::update() {
   }
   #endif
 }
+
+void controls::resetStates() {
+  up_button.resetState();
+  down_button.resetState();
+  left_button.resetState();
+  right_button.resetState();
+  button_a.resetState();
+  button_b.resetState();
+}
