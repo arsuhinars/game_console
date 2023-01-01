@@ -79,12 +79,17 @@ void Menu::update() {
 
   if (_title != nullptr) {
     size_t title_length = rus_strlen_P(reinterpret_cast<PGM_P>(_title));
-    int title_x = DISPLAY_WIDTH / 2 - title_length * 3 * _title_scale;
+    int title_x = DISPLAY_WIDTH / 2 - title_length * DISPLAY_CHAR_WIDTH / 2 * _title_scale;
 
     // Отрисовываем заголовок
     display::oled.setScale(_title_scale);
     display::oled.clear(0, 0, title_x - 1, MENU_TITLE_HEIGHT - 1);
-    display::oled.clear(title_x + title_length * 12, 0, DISPLAY_WIDTH - 1, MENU_TITLE_HEIGHT - 1);
+    display::oled.clear(
+      title_x + title_length * DISPLAY_CHAR_WIDTH * _title_scale,
+      0,
+      DISPLAY_WIDTH - 1,
+      MENU_TITLE_HEIGHT - 1
+    );
     display::oled.setCursorXY(title_x, 0);
     display::oled.print(_title);
 
@@ -95,10 +100,15 @@ void Menu::update() {
   display::oled.setScale(1);
   for (size_t i = _items_scroll; i < (int)_items_count; ++i) {
     size_t item_length = rus_strlen_P(reinterpret_cast<PGM_P>(_items[i]));
-    int item_x = DISPLAY_WIDTH / 2 - item_length * 3;
+    int item_x = DISPLAY_WIDTH / 2 - item_length * DISPLAY_CHAR_WIDTH / 2;
 
     display::oled.clear(0, item_y, item_x - 1, item_y + MENU_ITEM_HEIGHT - 1);
-    display::oled.clear(item_x + item_length * 6, item_y, DISPLAY_WIDTH - 1, item_y + MENU_ITEM_HEIGHT - 1);
+    display::oled.clear(
+      item_x + item_length * DISPLAY_CHAR_WIDTH,
+      item_y,
+      DISPLAY_WIDTH - 1,
+      item_y + MENU_ITEM_HEIGHT - 1
+    );
     display::oled.setCursorXY(item_x, item_y);
     display::oled.print(_items[i]);
 
@@ -111,7 +121,7 @@ void Menu::update() {
         MENU_ICON_SIZE, MENU_ICON_SIZE
       );
       display::oled.drawBitmap(
-        item_x + item_length * 6 + MENU_CURSOR_SPACING,
+        item_x + item_length * DISPLAY_CHAR_WIDTH + MENU_CURSOR_SPACING,
         item_y,
         chevron_left,
         MENU_ICON_SIZE, MENU_ICON_SIZE
