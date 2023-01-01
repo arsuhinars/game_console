@@ -7,6 +7,18 @@
 #define FPSTR(pstr) (const __FlashStringHelper*)(pstr)
 
 namespace utils {
+  // Стуктура для хранения двухмерного вектора
+  template <typename T>
+  struct vec2 {
+    T x;
+    T y;
+  };
+  // Определяем все типы векторов
+  typedef vec2<int16_t> ivec2;    // int
+  typedef vec2<int8_t> cvec2;     // char
+  typedef vec2<uint16_t> uvec2;   // unsigned int
+  typedef vec2<uint8_t> ucvec2;   // unsigned char
+
   /// Функция вычисления длины строки, содержащей русские символы в кодировке UTF-8
   size_t rus_strlen(const char* s);
 

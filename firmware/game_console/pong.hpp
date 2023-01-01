@@ -4,6 +4,7 @@
 
 #include "game.hpp"
 #include "menu.hpp"
+#include "utils.hpp"
 
 // Параметры игры
 #define MAX_SCORE         5     // Максимальный счет
@@ -59,10 +60,8 @@ private:
   int16_t _right_racket_vel = 0;
 
   // Позиция и скорость мячика
-  int16_t _ball_x = 0;
-  int16_t _ball_y = 0;
-  int16_t _ball_vel_x = 0;
-  int16_t _ball_vel_y = 0;
+  utils::ivec2 _ball_pos = { 0, 0 };
+  utils::ivec2 _ball_vel = { 0, 0 };
 
   unsigned long _last_time = 0;
 

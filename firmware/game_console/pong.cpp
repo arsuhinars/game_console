@@ -2,7 +2,6 @@
 
 #include "controls.hpp"
 #include "display.hpp"
-#include "utils.hpp"
 #include "texts.hpp"
 #include "pong.hpp"
 
@@ -30,8 +29,7 @@ Pong::~Pong() {
 
 bool Pong::update() {
   bool need_redraw = false;
-  int16_t old_ball_x = _ball_x;
-  int16_t old_ball_y = _ball_y;
+  auto old_ball_pos = _ball_pos;
 
   switch (_game_data.state) {
     case GameState::MAIN_MENU:
@@ -65,17 +63,17 @@ bool Pong::update() {
         need_redraw = true;
         
         // Ограничиваем скорость мяча
-        _ball_vel_x = constrain(_ball_vel_x, -BALL_MAX_SPEED, BALL_MAX_SPEED);
-        _ball_vel_y = constrain(_ball_vel_y, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+        _ball_vel.x = constrain(_ball_vel.x, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+        _ball_vel.y = constrain(_ball_vel.y, -BALL_MAX_SPEED, BALL_MAX_SPEED);
 
         // Обновляем положение мяча
-        _ball_x += _ball_vel_x * UPDATE_STEP / 1000;
-        _ball_y += _ball_vel_y * UPDATE_STEP / 1000;
+        _ball_pos.x += _ball_vel.x * UPDATE_STEP / 1000;
+        _ball_pos.y += _ball_vel.y * UPDATE_STEP / 1000;
 
-        int16_t ball_left = _ball_x / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2;
-        int16_t ball_right = _ball_x / SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2;
-        int16_t ball_top = _ball_y / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2;
-        int16_t ball_bottom = _ball_y / SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2;
+        int16_t ball_left = _ball_pos.x / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2;
+        int16_t ball_right = _ball_pos.x / SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2;
+        int16_t ball_top = _ball_pos.y / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2;
+        int16_t ball_bottom = _ball_pos.y / SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2;
 
         int16_t left_racket_top = _left_racket_pos / SUBPIXELS_COUNT - RACKET_LENGTH / 2;
         int16_t left_racket_bottom = _left_racket_pos / SUBPIXELS_COUNT + RACKET_LENGTH / 2;
@@ -85,7 +83,7 @@ bool Pong::update() {
 
         // Обрабатываем столкновение мяча с верхней и нижней стенкой
         if ( ball_top <= 0 || ball_bottom >= DISPLAY_HEIGHT - 1) {
-          _ball_vel_y *= -1;
+          _ball_vel.y *= -1;
         }
 
         // Обрабатываем столкновения с левой ракеткой
@@ -93,9 +91,9 @@ bool Pong::update() {
           (ball_top <= left_racket_bottom && ball_top >= left_racket_top) ||
           (ball_bottom <= left_racket_bottom && ball_bottom >= left_racket_top)
         )) {
-          _ball_x = (RACKET_THICKNESS + BALL_SPRITE_SIZE / 2) * SUBPIXELS_COUNT;
-          _ball_vel_x *= -1;
-          _ball_vel_y += _left_racket_vel;
+          _ball_pos.x = (RACKET_THICKNESS + BALL_SPRITE_SIZE / 2) * SUBPIXELS_COUNT;
+          _ball_vel.x *= -1;
+          _ball_vel.y += _left_racket_vel;
         }
 
         // Обрабатываем столковения с правой ракеткой
@@ -103,9 +101,9 @@ bool Pong::update() {
           (ball_top <= right_racket_bottom && ball_top >= right_racket_top) ||
           (ball_bottom <= right_racket_bottom && ball_bottom >= right_racket_top)
         )) {
-          _ball_x = (DISPLAY_WIDTH - 1 - RACKET_THICKNESS - BALL_SPRITE_SIZE / 2) * SUBPIXELS_COUNT;
-          _ball_vel_x *= -1;
-          _ball_vel_y += _left_racket_vel;
+          _ball_pos.x = (DISPLAY_WIDTH - 1 - RACKET_THICKNESS - BALL_SPRITE_SIZE / 2) * SUBPIXELS_COUNT;
+          _ball_vel.x *= -1;
+          _ball_vel.y += _left_racket_vel;
         }
 
         // Обработка выхода за границы экрана
@@ -145,9 +143,9 @@ bool Pong::update() {
 
         int16_t right_racket_accel = 0;
         if (_game_data.type == GameType::ONE_PLAYER) {
-          int16_t target_y = _ball_y;
-          if (_ball_x / SUBPIXELS_COUNT < DISPLAY_WIDTH * 3 / 4) {
-            target_y = DISPLAY_HEIGHT * SUBPIXELS_COUNT - _ball_y;
+          int16_t target_y = _ball_pos.y;
+          if (_ball_pos.x / SUBPIXELS_COUNT < DISPLAY_WIDTH * 3 / 4) {
+            target_y = DISPLAY_HEIGHT * SUBPIXELS_COUNT - _ball_pos.y;
           }
 
           // Если игра в одиночку, то правая ракетка управляется псевдо ИИ
@@ -188,15 +186,15 @@ bool Pong::update() {
     _game_data.state = GameState::IDLE;
     display::oled.clear();
   } else if (need_redraw) {
-    old_ball_x /= SUBPIXELS_COUNT;
-    old_ball_y /= SUBPIXELS_COUNT;
+    old_ball_pos.x /= SUBPIXELS_COUNT;
+    old_ball_pos.y /= SUBPIXELS_COUNT;
 
     // Очищаем только те области, которые изменились
     display::oled.clear(
-      old_ball_x - BALL_SPRITE_SIZE / 2,
-      old_ball_y - BALL_SPRITE_SIZE / 2,
-      old_ball_x + BALL_SPRITE_SIZE / 2,
-      old_ball_y + BALL_SPRITE_SIZE / 2
+      old_ball_pos.x - BALL_SPRITE_SIZE / 2,
+      old_ball_pos.y - BALL_SPRITE_SIZE / 2,
+      old_ball_pos.x + BALL_SPRITE_SIZE / 2,
+      old_ball_pos.y + BALL_SPRITE_SIZE / 2
     );
 
     // Очищаем область у левой ракетки
@@ -233,8 +231,8 @@ bool Pong::update() {
 
   // Отрисовываем мяч
   display::oled.drawBitmap(
-    _ball_x / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
-    _ball_y / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
+    _ball_pos.x / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
+    _ball_pos.y / SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
     ball_sprite,
     BALL_SPRITE_SIZE,
     BALL_SPRITE_SIZE,
@@ -256,7 +254,10 @@ bool Pong::update() {
   );
 
   // Отрисовываем счет
-  display::oled.setCursorXY(DISPLAY_WIDTH / 2 - 15, 0);
+  display::oled.setCursorXY(
+    DISPLAY_WIDTH / 2 - DISPLAY_CHAR_WIDTH * (sizeof(_score_text) - 1) / 2,
+    0
+  );
   display::oled.print(_score_text);
 
   // Обновляем дисплей
@@ -269,6 +270,7 @@ void Pong::startNewRound() {
   // Если одна из сторон победила
   if (_game_data.left_score >= MAX_SCORE || _game_data.right_score >= MAX_SCORE) {
     __FlashStringHelper* menu_title;
+
     // Меняем заголовок в зависимости от того, кто выиграл
     if (_game_data.left_score == _game_data.right_score) {
       menu_title = FPSTR(texts::DRAW);
@@ -291,23 +293,26 @@ void Pong::startNewRound() {
     return;
   }
   
+  // Сбрасываем состояние игры
   _game_data.state = GameState::IDLE_REDRAW;
   _last_time = millis();
 
+  // Сбрасываем положения и скорости ракеток
   _left_racket_pos = DISPLAY_HEIGHT / 2 * SUBPIXELS_COUNT;
   _left_racket_vel = 0;
   _right_racket_pos = DISPLAY_HEIGHT / 2 * SUBPIXELS_COUNT;
   _right_racket_vel = 0;
 
-  _ball_x = DISPLAY_WIDTH / 2 * SUBPIXELS_COUNT;
-  _ball_y = DISPLAY_HEIGHT  / 2 * SUBPIXELS_COUNT;
-  _ball_vel_x = random(BALL_MAX_SPEED / 5, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
-  _ball_vel_y = random(BALL_MAX_SPEED / 5, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
+  // Сбрасываем мяч и генерируем случайное направление движения
+  _ball_pos.x = DISPLAY_WIDTH / 2 * SUBPIXELS_COUNT;
+  _ball_pos.y = DISPLAY_HEIGHT  / 2 * SUBPIXELS_COUNT;
+  _ball_vel.x = random(BALL_MAX_SPEED / 5, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
+  _ball_vel.y = random(BALL_MAX_SPEED / 5, BALL_MAX_SPEED + 1) * SUBPIXELS_COUNT;
   if (random(2)) {
-    _ball_vel_x *= -1;
+    _ball_vel.x *= -1;
   }
   if (random(2)) {
-    _ball_vel_y *= -1;
+    _ball_vel.y *= -1;
   }
 
   // Формируем строку с текстом счета
