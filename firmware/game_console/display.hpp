@@ -6,8 +6,9 @@
 #define DISPLAY_WIDTH     128
 #define DISPLAY_HEIGHT    64
 
-// Ширина одного символа на экране
-#define DISPLAY_CHAR_WIDTH 6
+// Размеры шрифта на экране
+#define DISPLAY_FONT_WIDTH  6
+#define DISPLAY_FONT_HEIGHT 8
 
 namespace display {
   typedef GyverOLED<SSD1306_128x64, OLED_NO_BUFFER> OLED;
