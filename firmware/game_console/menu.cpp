@@ -6,8 +6,7 @@
 using namespace utils;
 
 #define MENU_ICON_SIZE    8
-#define MENU_TITLE_HEIGHT (16 + MENU_ITEMS_SPACING)
-#define MENU_ITEM_HEIGHT  (8 + MENU_ITEMS_SPACING)
+#define MENU_ITEM_HEIGHT  (DISPLAY_FONT_HEIGHT + MENU_ITEMS_SPACING)
 
 // Иконки указателей в меню размером 8x8
 const uint8_t chevron_right[] PROGMEM = {
@@ -31,11 +30,30 @@ Menu::Menu(
 
 Menu::~Menu() { }
 
+void Menu::setTitle(const __FlashStringHelper* title) {
+  _title = title;
+  _need_redraw = true;
+}
+
+void Menu::setTitleScale(uint8_t title_scale) {
+  _title_scale = title_scale;
+  _need_redraw = true;
+}
+
 void Menu::update() {
   // Ждем пока не будет обработан нажатый элемент
   if (_is_item_clicked) {
     return;
   }
+
+  // Вычисляем высоту заголовка
+  int title_height = DISPLAY_FONT_HEIGHT * _title_scale;
+  // Вычисляем максимальное кол-во элементов на экране
+  auto max_display_items = static_cast<uint8_t>(
+    _title != nullptr ? 
+    (DISPLAY_HEIGHT - title_height - 1) / MENU_ITEM_HEIGHT + 1 :
+    (DISPLAY_HEIGHT - 1) / MENU_ITEM_HEIGHT + 1
+  );
 
   // Обрабатываем нажатие вверх
   if (controls::up_button.click() && _selected_item > 0) {
@@ -49,11 +67,6 @@ void Menu::update() {
 
   // Обрабатываем нажатие вниз
   if (controls::down_button.click() && _selected_item < _items_count - 1) {
-    uint8_t max_display_items = 
-      _title != nullptr ? 
-      (DISPLAY_HEIGHT - MENU_TITLE_HEIGHT - 1) / MENU_ITEM_HEIGHT + 1 :
-      (DISPLAY_HEIGHT - 1) / MENU_ITEM_HEIGHT + 1;
-
     if (_selected_item == (_items_scroll + max_display_items - 1)) {
       ++_items_scroll;
     }
@@ -79,32 +92,32 @@ void Menu::update() {
 
   if (_title != nullptr) {
     size_t title_length = rus_strlen_P(reinterpret_cast<PGM_P>(_title));
-    int title_x = DISPLAY_WIDTH / 2 - title_length * DISPLAY_CHAR_WIDTH / 2 * _title_scale;
+    int title_x = DISPLAY_WIDTH / 2 - title_length * DISPLAY_FONT_WIDTH / 2 * _title_scale;
 
     // Отрисовываем заголовок
     display::oled.setScale(_title_scale);
-    display::oled.clear(0, 0, title_x - 1, MENU_TITLE_HEIGHT - 1);
+    display::oled.clear(0, 0, title_x - 1, title_height - 1);
     display::oled.clear(
-      title_x + title_length * DISPLAY_CHAR_WIDTH * _title_scale,
+      title_x + title_length * DISPLAY_FONT_WIDTH * _title_scale,
       0,
       DISPLAY_WIDTH - 1,
-      MENU_TITLE_HEIGHT - 1
+      title_height - 1
     );
     display::oled.setCursorXY(title_x, 0);
     display::oled.print(_title);
 
-    item_y = MENU_TITLE_HEIGHT;
+    item_y = title_height;
   }
 
   // Отрисовываем пункты меню
   display::oled.setScale(1);
   for (size_t i = _items_scroll; i < (int)_items_count; ++i) {
     size_t item_length = rus_strlen_P(reinterpret_cast<PGM_P>(_items[i]));
-    int item_x = DISPLAY_WIDTH / 2 - item_length * DISPLAY_CHAR_WIDTH / 2;
+    int item_x = DISPLAY_WIDTH / 2 - item_length * DISPLAY_FONT_WIDTH / 2;
 
     display::oled.clear(0, item_y, item_x - 1, item_y + MENU_ITEM_HEIGHT - 1);
     display::oled.clear(
-      item_x + item_length * DISPLAY_CHAR_WIDTH,
+      item_x + item_length * DISPLAY_FONT_WIDTH,
       item_y,
       DISPLAY_WIDTH - 1,
       item_y + MENU_ITEM_HEIGHT - 1
@@ -121,7 +134,7 @@ void Menu::update() {
         MENU_ICON_SIZE, MENU_ICON_SIZE
       );
       display::oled.drawBitmap(
-        item_x + item_length * DISPLAY_CHAR_WIDTH + MENU_CURSOR_SPACING,
+        item_x + item_length * DISPLAY_FONT_WIDTH + MENU_CURSOR_SPACING,
         item_y,
         chevron_left,
         MENU_ICON_SIZE, MENU_ICON_SIZE
@@ -136,6 +149,26 @@ void Menu::update() {
 
   // Очищаем оставшуюся часть
   display::oled.clear(0, item_y, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
+
+  if (_items_count > max_display_items) {
+    uint8_t n = _items_count - max_display_items + 1;
+
+    // Вычисляем размер ползунка
+    int slider_size = max(
+      DISPLAY_HEIGHT / n,
+      MENU_SLIDER_MIN_SIZE
+    );
+    // и его положение на экране
+    int slider_y = (DISPLAY_HEIGHT - slider_size) * _items_scroll / n;
+
+    // Отрисовываем ползунок
+    display::oled.rect(
+      DISPLAY_WIDTH - 1 - MENU_SLIDER_THICKNESS,
+      slider_y,
+      DISPLAY_WIDTH - 1,
+      slider_y + slider_size - 1
+    );
+  }
 
   // Обновляем дисплей
   display::oled.update();

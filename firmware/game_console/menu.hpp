@@ -3,9 +3,13 @@
 #include <Arduino.h>
 
 // Размеры отступов между пунктами меню
-#define MENU_ITEMS_SPACING 4
+#define MENU_ITEMS_SPACING    4
 // Отступ между текстом пункта меню и курсором
-#define MENU_CURSOR_SPACING 4
+#define MENU_CURSOR_SPACING   4
+// Толщина ползунка
+#define MENU_SLIDER_THICKNESS 3
+// Минимальный размер ползунка
+#define MENU_SLIDER_MIN_SIZE  8
 
 // Класс для создания и отображения наэкранного меню.
 class Menu {
@@ -24,6 +28,12 @@ public:
     uint8_t title_scale = 2
   );
   ~Menu();
+
+  /// Изменить заголовок меню
+  void setTitle(const __FlashStringHelper* title);
+  
+  /// Изменить маштаб шрифта заголовка
+  void setTitleScale(uint8_t title_scale);
 
   /// Метод для отрисовки и обновления меню на экране
   void update();
