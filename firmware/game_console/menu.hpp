@@ -7,7 +7,7 @@
 // Отступ между текстом пункта меню и курсором
 #define MENU_CURSOR_SPACING   4
 // Толщина ползунка
-#define MENU_SLIDER_THICKNESS 3
+#define MENU_SLIDER_THICKNESS 2
 // Минимальный размер ползунка
 #define MENU_SLIDER_MIN_SIZE  8
 

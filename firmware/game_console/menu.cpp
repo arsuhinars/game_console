@@ -51,8 +51,8 @@ void Menu::update() {
   // Вычисляем максимальное кол-во элементов на экране
   auto max_display_items = static_cast<uint8_t>(
     _title != nullptr ? 
-    (DISPLAY_HEIGHT - title_height - 1) / MENU_ITEM_HEIGHT + 1 :
-    (DISPLAY_HEIGHT - 1) / MENU_ITEM_HEIGHT + 1
+    (DISPLAY_HEIGHT - title_height) / MENU_ITEM_HEIGHT :
+    DISPLAY_HEIGHT / MENU_ITEM_HEIGHT
   );
 
   // Обрабатываем нажатие вверх
@@ -159,7 +159,7 @@ void Menu::update() {
       MENU_SLIDER_MIN_SIZE
     );
     // и его положение на экране
-    int slider_y = (DISPLAY_HEIGHT - slider_size) * _items_scroll / n;
+    int slider_y = (DISPLAY_HEIGHT - slider_size) * _items_scroll / (n - 1);
 
     // Отрисовываем ползунок
     display::oled.rect(
