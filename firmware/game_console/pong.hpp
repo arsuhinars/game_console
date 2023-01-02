@@ -1,21 +1,19 @@
 #pragma once
 
-#include <avr/pgmspace.h>
-
 #include "game.hpp"
 #include "menu.hpp"
 #include "utils.hpp"
 
 // Параметры игры
-#define MAX_SCORE         5     // Максимальный счет
-#define IDLE_TIME         1000  // Время задержки в начале раунда
-#define UPDATE_STEP       30    // Длительность шага обновления игры
-#define SUBPIXELS_COUNT   4     // Количество субпикселей в одном пикселе
-#define BALL_MAX_SPEED    200   // Максимальная скорость мячика
-#define RACKET_ACCEL      600   // Ускорение ракетки
-#define RACKET_DRAG       2     // Коэффициент сопротивления движению ракетки
-#define RACKET_THICKNESS  3     // Толщина ракетки
-#define RACKET_LENGTH     18    // Длина ракетки
+#define PONG_MAX_SCORE        5     // Максимальный счет
+#define PONG_IDLE_TIME        1000  // Время задержки в начале раунда
+#define PONG_UPDATE_STEP      30    // Длительность шага обновления игры
+#define PONG_SUBPIXELS_COUNT  4     // Количество субпикселей в одном пикселе
+#define BALL_MAX_SPEED        200   // Максимальная скорость мячика
+#define RACKET_ACCEL          600   // Ускорение ракетки
+#define RACKET_DRAG           2     // Коэффициент сопротивления движению ракетки
+#define RACKET_THICKNESS      3     // Толщина ракетки
+#define RACKET_LENGTH         18    // Длина ракетки
 
 class Pong : public Game {
 public:
