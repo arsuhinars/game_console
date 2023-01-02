@@ -1,22 +1,25 @@
 #pragma once
 
+#include <avr/pgmspace.h>
+
 /// Файл со всеми строками текста, хранящимися в Flash памяти
 namespace texts {
   // Названия игр
-  const char SNAKE_NAME[] PROGMEM = "Змейка";
-  const char PONG_NAME[] PROGMEM = "Pong";
-  const char DINO_NAME[] PROGMEM = "Dino";
-  const char TETRIS_NAME[] PROGMEM = "Тетрис";
+  extern const char SNAKE_NAME[] PROGMEM;
+  extern const char PONG_NAME[] PROGMEM;
+  extern const char DINO_NAME[] PROGMEM;
+  extern const char TETRIS_NAME[] PROGMEM;
 
   // Тексты для игровых меню
-  const char ONE_PLAYER[] PROGMEM = "1 игрок";
-  const char TWO_PLAYERS[] PROGMEM = "2 игрока";
-  const char QUIT[] PROGMEM = "Выйти";
+  extern const char START[] PROGMEM;
+  extern const char ONE_PLAYER[] PROGMEM;
+  extern const char TWO_PLAYERS[] PROGMEM;
+  extern const char QUIT[] PROGMEM;
 
   // Текст для игры Pong
-  const char YOU_WIN[] PROGMEM = "Вы выиграли";
-  const char YOU_LOSE[] PROGMEM = "Вы проиграли";
-  const char LEFT_WIN[] PROGMEM = "1 игрок выиграл";
-  const char RIGHT_WIN[] PROGMEM = "2 игрок выиграл";
-  const char DRAW[] PROGMEM = "Ничья";
+  extern const char YOU_WIN[] PROGMEM;
+  extern const char YOU_LOSE[] PROGMEM;
+  extern const char LEFT_WIN[] PROGMEM;
+  extern const char RIGHT_WIN[] PROGMEM;
+  extern const char DRAW[] PROGMEM;
 } // namespace texts
