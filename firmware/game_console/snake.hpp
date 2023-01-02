@@ -27,7 +27,12 @@
 #define INITIAL_SNAKE_DIR     SNAKE_DIR_RIGHT
 
 // Длительность шага обновления игры в миллисекундах
-#define SNAKE_UPDATE_STEP     500
+#define SNAKE_UPDATE_STEP     400
+
+// Шанс спавна дополнительной еды. Вероятность: 1/N
+#define SNAKE_EXTRA_FOOD_RATE   3
+// Количество шагов до исчезновения дополнительной еды
+#define SNAKE_EXTRA_FOOD_STEPS  12
 
 class Snake : public Game {
 public:
@@ -73,5 +78,8 @@ private:
   void startGame();
 
   // Метод спавна еды
-  // void spawnFood();
+  void spawnFood();
+
+  // Метод спавна дополнительной еды
+  void spawnExtraFood();
 };
