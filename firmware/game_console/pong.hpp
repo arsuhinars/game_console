@@ -20,7 +20,6 @@
 class Pong : public Game {
 public:
   explicit Pong();
-  ~Pong();
 
   bool update() override;
 
@@ -39,7 +38,7 @@ private:
     TWO_PLAYERS,  // Игра вдвоем
   };
 
-  Menu* _menu = nullptr;
+  Menu _menu;
   
   // Структура, хранящая данные игры
   // Для оптимизации памяти используются битовые поля

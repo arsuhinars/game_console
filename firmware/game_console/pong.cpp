@@ -17,14 +17,8 @@ const __FlashStringHelper* MENU_ITEMS[] = {
   FPSTR(texts::ONE_PLAYER), FPSTR(texts::TWO_PLAYERS), FPSTR(texts::QUIT)
 };
 
-Pong::Pong() : _menu() {
-  _menu = new Menu(
-    MENU_ITEMS, 3, FPSTR(texts::PONG_NAME)
-  );
-}
+Pong::Pong() : _menu(MENU_ITEMS, 3, FPSTR(texts::PONG_NAME)) {
 
-Pong::~Pong() {
-  delete _menu;
 }
 
 bool Pong::update() {
@@ -33,19 +27,19 @@ bool Pong::update() {
 
   switch (_game_data.state) {
     case GameState::MAIN_MENU:
-      _menu->update();
+      _menu.update();
 
-      if (_menu->clickedItem() == 2) {
+      if (_menu.clickedItem() == 2) {
         return false;
-      } else if (_menu->clickedItem() != -1) {
+      } else if (_menu.clickedItem() != -1) {
         _game_data.type = 
-          _menu->clickedItem() == 0 ?
+          _menu.clickedItem() == 0 ?
           GameType::ONE_PLAYER :
           GameType::TWO_PLAYERS;
         _game_data.left_score = 0;
         _game_data.right_score = 0;
 
-        _menu->handleClickedItem();
+        _menu.handleClickedItem();
 
         startNewRound();
       }
@@ -255,8 +249,7 @@ bool Pong::update() {
 
   // Отрисовываем счет
   display::oled.setCursorXY(
-    DISPLAY_WIDTH / 2 - DISPLAY_CHAR_WIDTH * (sizeof(_score_text) - 1) / 2,
-    0
+    DISPLAY_WIDTH / 2 - DISPLAY_FONT_WIDTH * (sizeof(_score_text) - 1) / 2, 0
   );
   display::oled.print(_score_text);
 
@@ -273,22 +266,27 @@ void Pong::startNewRound() {
 
     // Меняем заголовок в зависимости от того, кто выиграл
     if (_game_data.left_score == _game_data.right_score) {
-      menu_title = FPSTR(texts::DRAW);
+      _menu.setTitle(FPSTR(texts::DRAW));
     } else if (_game_data.left_score > _game_data.right_score) {
-      menu_title = 
+      _menu.setTitle(
         _game_data.type == GameType::ONE_PLAYER ?
         FPSTR(texts::YOU_WIN) :
-        FPSTR(texts::LEFT_WIN);
+        FPSTR(texts::LEFT_WIN)
+      );
     } else {
-      menu_title = 
+      _menu.setTitle(
         _game_data.type == GameType::ONE_PLAYER ?
         FPSTR(texts::YOU_LOSE) :
-        FPSTR(texts::RIGHT_WIN);
+        FPSTR(texts::RIGHT_WIN)
+      );
     }
 
-    delete _menu;
-    _menu = new Menu(MENU_ITEMS, 3, menu_title, 1);
     controls::resetStates();
+
+    _menu.setTitleScale(1);
+    _menu.forceRedraw();
+
+    // Возвращаемся в главное меню
     _game_data.state = GameState::MAIN_MENU;
     return;
   }
