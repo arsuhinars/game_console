@@ -63,6 +63,20 @@ const uint8_t* SNAKE_TAIL[] = {
   SNAKE_TAIL_UP, SNAKE_TAIL_RIGHT, SNAKE_TAIL_DOWN, SNAKE_TAIL_LEFT
 };
 
+// Спрайты еды
+const uint8_t SNAKE_FOOD_0[] PROGMEM = {
+	0x00, 0x00, 0x18, 0x3C, 0x3C, 0x18, 0x00, 0x00, 
+};
+const uint8_t SNAKE_FOOD_1[] PROGMEM = {
+	0x00, 0x18, 0x3C, 0x7E, 0x7E, 0x3C, 0x18, 0x00, 
+};
+const uint8_t SNAKE_FOOD_2[] PROGMEM = {
+	0x3C, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 
+};
+const uint8_t* SNAKE_FOOD[] = {
+  SNAKE_FOOD_0, SNAKE_FOOD_1, SNAKE_FOOD_2
+};
+
 const char* const SNAKE_MENU_ITEMS[] PROGMEM = {
   texts::START, texts::QUIT
 };
@@ -78,6 +92,7 @@ bool Snake::update() {
 
     if (_menu.clickedItem() != -1) {
       if (_menu.clickedItem() == 0) {
+        _menu.handleClickedItem();
         startGame();
         return true;
       } else {
@@ -107,8 +122,38 @@ bool Snake::update() {
     return true;
   }
   _last_update = millis();
-    
-  // Ищем подходящий спрайт
+
+  if (snake_growth == 0) {
+    // Очищаем область, где находился хвост
+    display::oled.clear(
+      snake_tail_pos.x * SNAKE_TILE_SIZE,
+      snake_tail_pos.y * SNAKE_TILE_SIZE,
+      snake_tail_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1,
+      snake_tail_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1
+    );
+  
+    int8_t tail_dir = field[snake_tail_pos.x][snake_tail_pos.y];
+    auto tail_dir_vec = getDirVector((uint8_t)tail_dir);
+
+    // Очищаем эту область на поле
+    field[snake_tail_pos.x][snake_tail_pos.y] = -1;
+
+    // Смещаем хвост
+    snake_tail_pos.x = (snake_tail_pos.x + tail_dir_vec.x + SNAKE_FIELD_WIDTH) % SNAKE_FIELD_WIDTH;
+    snake_tail_pos.y = (snake_tail_pos.y + tail_dir_vec.y + SNAKE_FIELD_HEIGHT) % SNAKE_FIELD_HEIGHT;
+
+    // Рисуем хвост в новой точке
+    display::oled.drawBitmap(
+      snake_tail_pos.x * SNAKE_TILE_SIZE, snake_tail_pos.y * SNAKE_TILE_SIZE,
+      SNAKE_TAIL[field[snake_tail_pos.x][snake_tail_pos.y]],
+      SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
+      0, BUF_REPLACE
+    );
+  } else {
+    --snake_growth;
+  }
+
+  // Ищем подходящий спрайт для тела
   uint8_t* sprite;
   if (last_snake_dir == snake_dir) {
     sprite = (snake_dir % 2 == 0) ? SNAKE_VERTICAL : SNAKE_HORIZONTAL;
@@ -150,8 +195,67 @@ bool Snake::update() {
   auto dir = getDirVector(snake_dir);
   snake_head_pos.x = (snake_head_pos.x + dir.x + SNAKE_FIELD_WIDTH) % SNAKE_FIELD_WIDTH;
   snake_head_pos.y = (snake_head_pos.y + dir.y + SNAKE_FIELD_HEIGHT) % SNAKE_FIELD_HEIGHT;
+
+  // Если змейка съела сама себя
+  if (field[snake_head_pos.x][snake_head_pos.y] != -1) {
+    _is_game_started = false;
+    controls::resetStates();
+    _menu.setTitleScale(1);
+    _menu.setTitle(FPSTR(texts::YOU_LOSE));
+    return true;    
+  }
+
   // Обновляем текущий тайл головы
   field[snake_head_pos.x][snake_head_pos.y] = snake_dir;
+
+  // Если змейка съела еду
+  if (snake_head_pos.x == food_pos.x && snake_head_pos.y == food_pos.y) {
+    // Увеличиваем змейку
+    ++snake_growth;
+
+    spawnFood();
+    spawnExtraFood();
+  } else {
+    // Рисуем еду
+    display::oled.drawBitmap(
+      food_pos.x * SNAKE_TILE_SIZE, food_pos.y * SNAKE_TILE_SIZE,
+      SNAKE_FOOD_0,
+      SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
+      0, BUF_REPLACE
+    );
+  }
+
+  // Если змейка съела дополнительную еду
+  if (extra_food_state > 0) {
+    if (
+      snake_head_pos.x == extra_food_pos.x &&
+      snake_head_pos.y == extra_food_pos.y
+    ) {
+      // Увеличиваем змейку
+      snake_growth += extra_food_state;
+      extra_food_state = 0;
+
+      spawnExtraFood();
+    } else if (extra_food_state == 1) {
+      extra_food_state = 0;
+      display::oled.clear(
+        extra_food_pos.x * SNAKE_TILE_SIZE,
+        extra_food_pos.y * SNAKE_TILE_SIZE,
+        extra_food_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1,
+        extra_food_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1
+      );
+    } else {
+      // Рисуем саму еду
+      display::oled.drawBitmap(
+        extra_food_pos.x * SNAKE_TILE_SIZE, extra_food_pos.y * SNAKE_TILE_SIZE,
+        SNAKE_FOOD[(extra_food_state - 1) * 3 / SNAKE_EXTRA_FOOD_STEPS],
+        SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
+        0, BUF_REPLACE
+      );
+
+      --extra_food_state;
+    }
+  }
 
   // Рисуем спрайт головы
   display::oled.drawBitmap(
@@ -160,36 +264,6 @@ bool Snake::update() {
     SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
     0, BUF_REPLACE
   );
-
-  if (snake_growth == 0) {
-    // Очищаем область, где находился хвост
-    display::oled.clear(
-      snake_tail_pos.x * SNAKE_TILE_SIZE,
-      snake_tail_pos.y * SNAKE_TILE_SIZE,
-      snake_tail_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1,
-      snake_tail_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1
-    );
-  
-    int8_t tail_dir = field[snake_tail_pos.x][snake_tail_pos.y];
-    auto tail_dir_vec = getDirVector((uint8_t)tail_dir);
-
-    // Очищаем эту область на поле
-    field[snake_tail_pos.x][snake_tail_pos.y] = -1;
-
-    // Смещаем хвост
-    snake_tail_pos.x = (snake_tail_pos.x + tail_dir_vec.x + SNAKE_FIELD_WIDTH) % SNAKE_FIELD_WIDTH;
-    snake_tail_pos.y = (snake_tail_pos.y + tail_dir_vec.y + SNAKE_FIELD_HEIGHT) % SNAKE_FIELD_HEIGHT;
-
-    // Рисуем хвост в новой точке
-    display::oled.drawBitmap(
-      snake_tail_pos.x * SNAKE_TILE_SIZE, snake_tail_pos.y * SNAKE_TILE_SIZE,
-      SNAKE_TAIL[field[snake_tail_pos.x][snake_tail_pos.y]],
-      SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
-      0, BUF_REPLACE
-    );
-  } else {
-    --snake_growth;
-  }
 
   // Обновляем дисплей
   display::oled.update();
@@ -234,6 +308,7 @@ void Snake::startGame() {
     INITIAL_SNAKE_Y - dir.y * (INITIAL_SNAKE_LENGTH - 1)
   };
   snake_dir = INITIAL_SNAKE_DIR;
+  last_snake_dir = INITIAL_SNAKE_DIR;
   snake_growth = 0;
 
   // Очищаем игровое поле
@@ -250,6 +325,77 @@ void Snake::startGame() {
     i < INITIAL_SNAKE_LENGTH;
     ++i, p.x -= dir.x, p.y -= dir.y
   ) {
-    field[p.x][p.y] = snake_dir;
+    field[p.x][p.y] = INITIAL_SNAKE_DIR;
+
+    // Вместе с этим и отрисовываем змейку
+    uint8_t* sprite;
+    if (i == 0) {
+      sprite = SNAKE_HEAD[INITIAL_SNAKE_DIR];
+    } else if (i == INITIAL_SNAKE_LENGTH - 1) {
+      sprite = SNAKE_TAIL[INITIAL_SNAKE_DIR];
+    } else {
+      sprite = (INITIAL_SNAKE_DIR % 2 == 0) ? SNAKE_VERTICAL : SNAKE_HORIZONTAL;
+    }
+
+    display::oled.drawBitmap(
+      p.x * SNAKE_TILE_SIZE, p.y * SNAKE_TILE_SIZE,
+      sprite,
+      SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
+      0, BUF_REPLACE
+    );
   }
+
+  // Создаем еду
+  spawnFood();
+}
+
+void Snake::spawnFood() {
+  cvec2 last_suit_pos = { 0, 0 };
+  for (uint8_t x = 0; x < SNAKE_FIELD_WIDTH; ++x) {
+    for (uint8_t y = 0; y < SNAKE_FIELD_HEIGHT; ++y) {
+      if (field[x][y] != -1) {
+        continue;
+      }
+
+      last_suit_pos = { x, y };
+
+      if (!random(SNAKE_FIELD_WIDTH * SNAKE_FIELD_HEIGHT)) {
+        food_pos = last_suit_pos;
+        return;
+      }
+    }
+  }
+
+  food_pos = last_suit_pos;
+}
+
+void Snake::spawnExtraFood() {
+  if (extra_food_state > 0) {
+    return;
+  }
+
+  if (random(SNAKE_EXTRA_FOOD_RATE)) {
+    extra_food_state = 0;
+    return;
+  }
+
+  cvec2 last_suit_pos = { 0, 0 };
+  for (uint8_t x = 0; x < SNAKE_FIELD_WIDTH; ++x) {
+    for (uint8_t y = 0; y < SNAKE_FIELD_HEIGHT; ++y) {
+      if (field[x][y] != -1) {
+        continue;
+      }
+
+      last_suit_pos = { x, y };
+
+      if (!random(SNAKE_FIELD_WIDTH * SNAKE_FIELD_HEIGHT)) {
+        extra_food_pos = last_suit_pos;
+        extra_food_state = SNAKE_EXTRA_FOOD_STEPS;
+        return;
+      }
+    }
+  }
+
+  extra_food_pos = last_suit_pos;
+  extra_food_state = SNAKE_EXTRA_FOOD_STEPS;
 }
