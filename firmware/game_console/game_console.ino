@@ -5,7 +5,7 @@
 
 // Меню с выбором игр
 Menu main_menu = Menu(
-  reinterpret_cast<const __FlashStringHelper* const*>(games_names),
+  games_names,
   games_count
 );
 

@@ -16,13 +16,13 @@ class Menu {
 public:
   /**
   * Конструктор класса
-  * @param items массив F() строк элементов меню
+  * @param items PROGMEM(!) массив F() строк элементов меню
   * @param items_count размер массива элементов
   * @param title F() строка с текстом заголовка меню. Не является обязательной.
   * @param title_scale Маштаб текста заголовка. По умолчанию - 2
   */
   explicit Menu(
-    const __FlashStringHelper** items,
+    const char* const *items,
     uint8_t items_count,
     const __FlashStringHelper* title = nullptr,
     uint8_t title_scale = 2
@@ -58,7 +58,7 @@ public:
   void forceRedraw();
 
 private:
-  const __FlashStringHelper** _items;
+  const char* const * _items;
   uint8_t _items_count;
   const __FlashStringHelper* _title;
   uint8_t _title_scale; 

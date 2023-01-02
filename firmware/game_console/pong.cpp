@@ -13,8 +13,8 @@ const uint8_t ball_sprite[] PROGMEM = {
 	0x00, 0x00, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 
 };
 
-const __FlashStringHelper* PONG_MENU_ITEMS[] = {
-  FPSTR(texts::ONE_PLAYER), FPSTR(texts::TWO_PLAYERS), FPSTR(texts::QUIT)
+const char* const PONG_MENU_ITEMS[] PROGMEM = {
+  texts::ONE_PLAYER, texts::TWO_PLAYERS, texts::QUIT
 };
 
 Pong::Pong() : _menu(PONG_MENU_ITEMS, 3, FPSTR(texts::PONG_NAME)) {

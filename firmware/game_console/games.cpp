@@ -16,7 +16,7 @@ const GameBuilder games[] = {
 };
 
 // Массив с названиями игр
-const char* const games_names[] = {
+const char* const games_names[] PROGMEM = {
   texts::SNAKE_NAME,
   texts::PONG_NAME,
   texts::DINO_NAME

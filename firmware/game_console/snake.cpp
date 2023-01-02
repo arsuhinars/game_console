@@ -63,8 +63,8 @@ const uint8_t* SNAKE_TAIL[] = {
   SNAKE_TAIL_UP, SNAKE_TAIL_RIGHT, SNAKE_TAIL_DOWN, SNAKE_TAIL_LEFT
 };
 
-const __FlashStringHelper* SNAKE_MENU_ITEMS[] = {
-  FPSTR(texts::START), FPSTR(texts::QUIT)
+const char* const SNAKE_MENU_ITEMS[] PROGMEM = {
+  texts::START, texts::QUIT
 };
 
 Snake::Snake() : _menu(SNAKE_MENU_ITEMS, 2, FPSTR(texts::SNAKE_NAME)) {

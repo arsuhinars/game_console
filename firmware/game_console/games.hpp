@@ -8,7 +8,7 @@
 extern const GameBuilder games[];
 
 // Массив с названиями игр
-extern const char* const games_names[];
+extern const char* const games_names[] PROGMEM;
 
 // Количество игр
 extern const uint8_t games_count;

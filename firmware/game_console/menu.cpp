@@ -17,7 +17,7 @@ const uint8_t chevron_left[] PROGMEM = {
 };
 
 Menu::Menu(
-  const __FlashStringHelper** items,
+  const char* const *items,
   uint8_t items_count,
   const __FlashStringHelper* title,
   uint8_t title_scale
@@ -47,7 +47,7 @@ void Menu::update() {
   }
 
   // Вычисляем высоту заголовка
-  int title_height = DISPLAY_FONT_HEIGHT * _title_scale;
+  int title_height = DISPLAY_FONT_HEIGHT * _title_scale + MENU_ITEMS_SPACING;
   // Вычисляем максимальное кол-во элементов на экране
   auto max_display_items = static_cast<uint8_t>(
     _title != nullptr ? 
@@ -112,7 +112,7 @@ void Menu::update() {
   // Отрисовываем пункты меню
   display::oled.setScale(1);
   for (size_t i = _items_scroll; i < (int)_items_count; ++i) {
-    size_t item_length = rus_strlen_P(reinterpret_cast<PGM_P>(_items[i]));
+    size_t item_length = rus_strlen_P((PGM_P)pgm_read_word(&_items[i]));
     int item_x = DISPLAY_WIDTH / 2 - item_length * DISPLAY_FONT_WIDTH / 2;
 
     display::oled.clear(0, item_y, item_x - 1, item_y + MENU_ITEM_HEIGHT - 1);
@@ -123,7 +123,7 @@ void Menu::update() {
       item_y + MENU_ITEM_HEIGHT - 1
     );
     display::oled.setCursorXY(item_x, item_y);
-    display::oled.print(_items[i]);
+    display::oled.print(FPSTR(pgm_read_word(&_items[i])));
 
     if (i == _selected_item) {
       // Отрисовываем курсор
