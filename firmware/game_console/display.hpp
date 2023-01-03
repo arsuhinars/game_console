@@ -1,5 +1,6 @@
 #pragma once
 
+#define USE_MICRO_WIRE
 #include <GyverOLED.h>
 
 // Разрешение дисплея
@@ -11,7 +12,7 @@
 #define DISPLAY_FONT_HEIGHT 8
 
 namespace display {
-  typedef GyverOLED<SSD1306_128x64, OLED_NO_BUFFER> OLED;
+  typedef GyverOLED<SSD1306_128x64, OLED_BUFFER> OLED;
 
   // Объект OLED дисплея
   extern const OLED oled;
