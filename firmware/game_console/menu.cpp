@@ -96,10 +96,16 @@ void Menu::update() {
 
     // Отрисовываем заголовок
     display::oled.setScale(_title_scale);
-    display::oled.clear(0, 0, title_x - 1, title_height - 1);
+    display::oled.clear(0, 0, title_x - 1, DISPLAY_FONT_HEIGHT * _title_scale - 1);
     display::oled.clear(
       title_x + title_length * DISPLAY_FONT_WIDTH * _title_scale,
       0,
+      DISPLAY_WIDTH - 1,
+      DISPLAY_FONT_HEIGHT * _title_scale - 1
+    );
+    display::oled.clear(
+      0,
+      DISPLAY_FONT_HEIGHT * _title_scale,
       DISPLAY_WIDTH - 1,
       title_height - 1
     );
