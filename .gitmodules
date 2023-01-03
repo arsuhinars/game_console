@@ -4,3 +4,6 @@
 [submodule "libraries/GyverOLED"]
 	path = libraries/GyverOLED
 	url = https://github.com/GyverLibs/GyverOLED
+[submodule "libraries/microWire"]
+	path = libraries/microWire
+	url = https://github.com/GyverLibs/microWire
