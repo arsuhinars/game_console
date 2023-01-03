@@ -13,7 +13,7 @@ Menu main_menu = Menu(
 Game* current_game = nullptr;
 
 void setup() {
-  Serial.begin(9600);
+  // Serial.begin(9600);
 
   // Настраиваем ПГСЧ с помощью аппаратного источника шума
   uint32_t seed = 0;
