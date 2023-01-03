@@ -179,16 +179,14 @@ bool Pong::update() {
   if (_game_data.state == GameState::IDLE_REDRAW) {
     _game_data.state = GameState::IDLE;
     display::oled.clear();
+    display::oled.update();
   } else if (need_redraw) {
-    old_ball_pos.x /= PONG_SUBPIXELS_COUNT;
-    old_ball_pos.y /= PONG_SUBPIXELS_COUNT;
-
     // Очищаем только те области, которые изменились
     display::oled.clear(
-      old_ball_pos.x - BALL_SPRITE_SIZE / 2,
-      old_ball_pos.y - BALL_SPRITE_SIZE / 2,
-      old_ball_pos.x + BALL_SPRITE_SIZE / 2,
-      old_ball_pos.y + BALL_SPRITE_SIZE / 2
+      old_ball_pos.x / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
+      old_ball_pos.y / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
+      old_ball_pos.x / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2,
+      old_ball_pos.y / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2
     );
 
     // Очищаем область у левой ракетки
@@ -232,6 +230,12 @@ bool Pong::update() {
     BALL_SPRITE_SIZE,
     0, BUF_REPLACE
   );
+  display::oled.update(
+    min(_ball_pos.x, old_ball_pos.x) / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2 - 1,
+    min(_ball_pos.y, old_ball_pos.y) / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2 - 1,
+    max(_ball_pos.x, old_ball_pos.x) / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2 + 1,
+    max(_ball_pos.y, old_ball_pos.y) / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2 + 1
+  );
 
   // Отрисовываем ракетки
   display::oled.rect(
@@ -240,21 +244,40 @@ bool Pong::update() {
     RACKET_THICKNESS - 1,
     _left_racket_pos / PONG_SUBPIXELS_COUNT + RACKET_LENGTH / 2
   );
+  display::oled.update(
+    0,
+    0,
+    RACKET_THICKNESS,
+    DISPLAY_HEIGHT
+  );
   display::oled.rect(
     DISPLAY_WIDTH - RACKET_THICKNESS,
     _right_racket_pos / PONG_SUBPIXELS_COUNT - RACKET_LENGTH / 2,
     DISPLAY_WIDTH - 1,
     _right_racket_pos / PONG_SUBPIXELS_COUNT + RACKET_LENGTH / 2
   );
+  display::oled.update(
+    DISPLAY_WIDTH - RACKET_THICKNESS,
+    0,
+    DISPLAY_WIDTH,
+    DISPLAY_HEIGHT
+  );
+
+  int text_x = DISPLAY_WIDTH / 2 - DISPLAY_FONT_WIDTH * (sizeof(_score_text) - 1) / 2;
 
   // Отрисовываем счет
+  display::oled.textMode(BUF_REPLACE);
+  display::oled.setScale(1);
   display::oled.setCursorXY(
-    DISPLAY_WIDTH / 2 - DISPLAY_FONT_WIDTH * (sizeof(_score_text) - 1) / 2, 0
+    text_x, 0
   );
   display::oled.print(_score_text);
-
-  // Обновляем дисплей
-  display::oled.update();
+  display::oled.update(
+    text_x,
+    0,
+    text_x + DISPLAY_FONT_WIDTH * (sizeof(_score_text) - 1),
+    DISPLAY_FONT_HEIGHT
+  );
 
   return true;
 }

@@ -131,6 +131,12 @@ bool Snake::update() {
       snake_tail_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1,
       snake_tail_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1
     );
+    display::oled.update(
+      snake_tail_pos.x * SNAKE_TILE_SIZE,
+      snake_tail_pos.y * SNAKE_TILE_SIZE,
+      snake_tail_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+      snake_tail_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
+    );
   
     int8_t tail_dir = field[snake_tail_pos.x][snake_tail_pos.y];
     auto tail_dir_vec = getDirVector((uint8_t)tail_dir);
@@ -148,6 +154,12 @@ bool Snake::update() {
       SNAKE_TAIL[field[snake_tail_pos.x][snake_tail_pos.y]],
       SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
       0, BUF_REPLACE
+    );
+    display::oled.update(
+      snake_tail_pos.x * SNAKE_TILE_SIZE,
+      snake_tail_pos.y * SNAKE_TILE_SIZE,
+      snake_tail_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+      snake_tail_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
     );
   } else {
     --snake_growth;
@@ -186,6 +198,12 @@ bool Snake::update() {
     SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
     0, BUF_REPLACE
   );
+  display::oled.update(
+    snake_head_pos.x * SNAKE_TILE_SIZE,
+    snake_head_pos.y * SNAKE_TILE_SIZE,
+    snake_head_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+    snake_head_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
+  );
 
   // Обновляем предыдущий тайл
   field[snake_head_pos.x][snake_head_pos.y] = snake_dir;
@@ -223,6 +241,12 @@ bool Snake::update() {
       SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
       0, BUF_REPLACE
     );
+    display::oled.update(
+      food_pos.x * SNAKE_TILE_SIZE,
+      food_pos.y * SNAKE_TILE_SIZE,
+      food_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+      food_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
+    );
   }
 
   // Если змейка съела дополнительную еду
@@ -232,7 +256,7 @@ bool Snake::update() {
       snake_head_pos.y == extra_food_pos.y
     ) {
       // Увеличиваем змейку
-      snake_growth += extra_food_state;
+      snake_growth += (extra_food_state - 1) * 3 / SNAKE_EXTRA_FOOD_STEPS;
       extra_food_state = 0;
 
       spawnExtraFood();
@@ -244,6 +268,12 @@ bool Snake::update() {
         extra_food_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1,
         extra_food_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE - 1
       );
+      display::oled.update(
+        extra_food_pos.x * SNAKE_TILE_SIZE,
+        extra_food_pos.y * SNAKE_TILE_SIZE,
+        extra_food_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+        extra_food_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
+      );
     } else {
       // Рисуем саму еду
       display::oled.drawBitmap(
@@ -251,6 +281,12 @@ bool Snake::update() {
         SNAKE_FOOD[(extra_food_state - 1) * 3 / SNAKE_EXTRA_FOOD_STEPS],
         SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
         0, BUF_REPLACE
+      );
+      display::oled.update(
+        extra_food_pos.x * SNAKE_TILE_SIZE,
+        extra_food_pos.y * SNAKE_TILE_SIZE,
+        extra_food_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+        extra_food_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
       );
 
       --extra_food_state;
@@ -264,9 +300,12 @@ bool Snake::update() {
     SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
     0, BUF_REPLACE
   );
-
-  // Обновляем дисплей
-  display::oled.update();
+  display::oled.update(
+    snake_head_pos.x * SNAKE_TILE_SIZE,
+    snake_head_pos.y * SNAKE_TILE_SIZE,
+    snake_head_pos.x * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE,
+    snake_head_pos.y * SNAKE_TILE_SIZE + SNAKE_TILE_SIZE
+  );
 
   return true;
 }
@@ -294,7 +333,7 @@ const cvec2& Snake::getDirVector(uint8_t dir) {
 void Snake::startGame() {
   // Очищаем экран
   display::oled.clear();
-
+  
   // Сбрасываем состояние игры
   _is_game_started = true;
   _last_update = millis();
@@ -344,6 +383,8 @@ void Snake::startGame() {
       0, BUF_REPLACE
     );
   }
+
+  display::oled.update();
 
   // Создаем еду
   spawnFood();
