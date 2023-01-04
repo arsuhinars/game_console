@@ -62,6 +62,6 @@ private:
 
   unsigned long _last_time = 0;
 
-  // Метод запуска нового раунда
+  /// Метод запуска нового раунда
   void startNewRound();
 };
