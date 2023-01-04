@@ -42,7 +42,7 @@ const uint8_t SNAKE_HEAD_LEFT[] PROGMEM = {
 };
 
 // Объединяем спрайты головы в один массив для оптимизации поиска
-const uint8_t* SNAKE_HEAD[] = {
+const uint8_t* const SNAKE_HEAD[] PROGMEM = {
   SNAKE_HEAD_UP, SNAKE_HEAD_RIGHT, SNAKE_HEAD_DOWN, SNAKE_HEAD_LEFT
 };
 
@@ -59,7 +59,7 @@ const uint8_t SNAKE_TAIL_DOWN[] PROGMEM = {
 const uint8_t SNAKE_TAIL_LEFT[] PROGMEM = {
 	0x42, 0x42, 0x42, 0x24, 0x24, 0x18, 0x00, 0x00, 
 };
-const uint8_t* SNAKE_TAIL[] = {
+const uint8_t* const SNAKE_TAIL[] PROGMEM = {
   SNAKE_TAIL_UP, SNAKE_TAIL_RIGHT, SNAKE_TAIL_DOWN, SNAKE_TAIL_LEFT
 };
 
@@ -73,7 +73,7 @@ const uint8_t SNAKE_FOOD_1[] PROGMEM = {
 const uint8_t SNAKE_FOOD_2[] PROGMEM = {
 	0x3C, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C, 
 };
-const uint8_t* SNAKE_FOOD[] = {
+const uint8_t* const SNAKE_FOOD[] PROGMEM = {
   SNAKE_FOOD_0, SNAKE_FOOD_1, SNAKE_FOOD_2
 };
 
@@ -151,7 +151,7 @@ bool Snake::update() {
     // Рисуем хвост в новой точке
     display::oled.drawBitmap(
       snake_tail_pos.x * SNAKE_TILE_SIZE, snake_tail_pos.y * SNAKE_TILE_SIZE,
-      SNAKE_TAIL[field[snake_tail_pos.x][snake_tail_pos.y]],
+      (uint8_t*)pgm_read_word(&SNAKE_TAIL[field[snake_tail_pos.x][snake_tail_pos.y]]),
       SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
       0, BUF_REPLACE
     );
@@ -278,7 +278,7 @@ bool Snake::update() {
       // Рисуем саму еду
       display::oled.drawBitmap(
         extra_food_pos.x * SNAKE_TILE_SIZE, extra_food_pos.y * SNAKE_TILE_SIZE,
-        SNAKE_FOOD[(extra_food_state - 1) * 3 / SNAKE_EXTRA_FOOD_STEPS],
+        (uint8_t*)pgm_read_word(&SNAKE_FOOD[(extra_food_state - 1) * 3 / SNAKE_EXTRA_FOOD_STEPS]),
         SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
         0, BUF_REPLACE
       );
@@ -296,7 +296,7 @@ bool Snake::update() {
   // Рисуем спрайт головы
   display::oled.drawBitmap(
     snake_head_pos.x * SNAKE_TILE_SIZE, snake_head_pos.y * SNAKE_TILE_SIZE,
-    SNAKE_HEAD[snake_dir],
+    (uint8_t*)pgm_read_word(&SNAKE_HEAD[snake_dir]),
     SNAKE_TILE_SIZE, SNAKE_TILE_SIZE,
     0, BUF_REPLACE
   );
