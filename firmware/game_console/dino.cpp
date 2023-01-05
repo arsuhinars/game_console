@@ -4,6 +4,8 @@
 #include "controls.hpp"
 #include "dino.hpp"
 
+using namespace utils;
+
 // Размеры всех спрайтов
 #define DINO_SIZE_X       24
 #define DINO_SIZE_Y       24
@@ -87,11 +89,12 @@ Dino::Dino() {
   display::oled.update();
 
   // Устанавливаем некоторые параметры в стандартное значение
-  _score = 0;
+  _next_obstacle_val = 0;
+  _game_counter = 0;
   _dino_y = DINO_GROUND_Y;
 
   // Сбрасываем состояния кнопок
-  // controls::resetStates();
+  controls::resetStates();
 }
 
 bool Dino::update() {
@@ -104,18 +107,24 @@ bool Dino::update() {
   int8_t old_dino_y = _dino_y;
 
   // Обновляем гравитацию
-  _dino_vel += DINO_GRAVITY * DINO_UPDATE_STEP / 1000;
+  if (controls::down_button.state()) {
+    _dino_vel += DINO_DUCK_GRAVITY * DINO_UPDATE_STEP / 1000;
+  } else {
+    _dino_vel += DINO_GRAVITY * DINO_UPDATE_STEP / 1000;
+  }
 
-  // Если динозаврик на земле
-  if (_dino_y >= DINO_GROUND_Y) {
-    // Обрабатываем высокий прыжок
-    if (controls::up_button.hold() || controls::button_a.hold()) {
-      _dino_vel = -DINO_HIGH_JUMP_SPEED;
-    }
-    // Обрабатываем обычный прыжок
-    else if (controls::up_button.release() || controls::button_a.release()) {
-      _dino_vel = -DINO_JUMP_SPEED;
-    }
+  // Тип прыжка, 0 - нет, 1 - обычный, 2 - высокий
+  uint8_t jump_type = 0;
+  if (controls::up_button.release() || controls::button_a.release()) {
+    jump_type = 1;
+  }
+  else if (controls::up_button.hold() || controls::button_a.hold()) {
+    jump_type = 2;
+  }
+
+  // Если динозаврик на земле и не в присяди
+  if (jump_type > 0 && _dino_y >= DINO_GROUND_Y && !controls::down_button.state()) {
+    _dino_vel = jump_type == 1 ? -DINO_JUMP_SPEED : -DINO_HIGH_JUMP_SPEED;
   }
 
   // Перемещаяем в соответствии со скоростью
@@ -127,46 +136,214 @@ bool Dino::update() {
     _dino_vel = 0;
   }
 
-  // Увеличиваем счетчик кадров
-  ++_frame_count;
+  // Если нужно спавнить препятствие
+  if (_game_counter >= _next_obstacle_val) {
+    _next_obstacle_val = _game_counter + random(DINO_MIN_OBSTACLE_RATE, DINO_MAX_OBSTACLE_RATE + 1);
 
-  if (_frame_count % DINO_BASE_SCORE_RATE == 0) {
-    // Увеличиваем счет игры в соотвествии со скоростью
-    ++_score;
+    if (!random(DINO_BIRD_SPAWN_RATE)) {
+      // Спавним птицу
+      spawnBird();
+    } else {
+      spawnCacti();
+    }
   }
 
-  // Рисуем динозаврика и выводим его на экран
+  // Увеличиваем счетчик кадров
+  if (++_frame_counter > DINO_BASE_SCORE_RATE) {
+    // Увеличиваем счет игры в соотвествии со скоростью
+    ++_game_counter;
+    // Сбрасываем счетчик кадров
+    _frame_counter = 0;
+  }
+
+  // Очищаем область для динозаврика
   display::oled.clear(
     DINO_POS_X,
-    old_dino_y - DINO_SIZE_Y + 1,
-    DINO_POS_X + DINO_SIZE_X - 1,
+    old_dino_y - max(DINO_SIZE_Y, DINO_DUCK_SIZE_Y) + 1,
+    DINO_POS_X + max(DINO_SIZE_X, DINO_DUCK_SIZE_X) - 1,
     old_dino_y
   );
-  display::oled.drawBitmap(
-    DINO_POS_X,
-    _dino_y - DINO_SIZE_Y + 1,
-    (_frame_count % (DINO_ANIM_STEP * 2) < DINO_ANIM_STEP) ? DINO_0 : DINO_1,
-    DINO_SIZE_X, DINO_SIZE_Y,
-    0, BUF_REPLACE
-  );
-  display::oled.update(
-    DINO_POS_X,
-    min(old_dino_y, _dino_y) - DINO_SIZE_Y + 2,
-    DINO_POS_X + DINO_SIZE_X,
-    max(old_dino_y, _dino_y) + 1
-  );
-
+  
   // Выводим счет на экран
   display::oled.textMode(BUF_REPLACE);
   display::oled.setScale(1);
   display::oled.setCursorXY(DINO_SCORE_PADDING, 0);
-  uint8_t score_length = (uint8_t)display::oled.print(_score);
+  uint8_t score_length = (uint8_t)display::oled.print(_game_counter);
+
+  // Обновляем и отрисовываем кактусы
+  for (uint8_t i = 0; i < DINO_MAX_CACTI; ++i) {
+    if (!_cacti[i].is_active) {
+      continue;
+    }
+
+    // Обновляем положение кактуса
+    _cacti[i].old_pos_x = _cacti[i].pos_x;
+    _cacti[i].pos_x -= DINO_BASE_SPEED * DINO_UPDATE_STEP / 1000;
+
+    ucvec2 size = (_cacti[i].type == 0) ?
+      ucvec2 { CACTUS_0_SIZE_X, CACTUS_0_SIZE_Y } :
+      ucvec2 { CACTUS_1_SIZE_X, CACTUS_1_SIZE_Y };
+
+    // Если кактус за границами экрана
+    if (_cacti[i].pos_x + size.x < 0) {
+      _cacti[i].is_active = false;
+      continue;
+    }
+
+    // Рисуем кактус
+    display::oled.clear(
+      _cacti[i].old_pos_x,
+      DINO_GROUND_Y - size.y + 1,
+      _cacti[i].old_pos_x + size.x,
+      DINO_GROUND_Y
+    );
+    display::oled.drawBitmap(
+      _cacti[i].pos_x, DINO_GROUND_Y - size.y + 1,
+      (_cacti[i].type == 0 ? CACTUS_0 : CACTUS_1),
+      size.x, size.y,
+      0, BUF_ADD
+    );
+  }
+
+  // Обновляем и отрисовываем птиц
+  for (uint8_t i = 0; i < DINO_MAX_BIRDS; ++i) {
+    if (!_birds[i].is_active) {
+      continue;
+    }
+
+    // Обновляем положение птицы
+    _birds[i].old_pos_x = _birds[i].pos.x;
+    _birds[i].pos.x -= (DINO_BIRD_MOVE_SPEED + DINO_BASE_SPEED) * DINO_UPDATE_STEP / 1000;
+
+    // Если птица за границами экрана
+    if (_birds[i].pos.x + BIRD_SIZE_X + 1 < 0) {
+      _birds[i].is_active = false;
+      continue;
+    }
+
+    // Рисуем птицу
+    display::oled.clear(
+      _birds[i].old_pos_x,
+      _birds[i].pos.y - BIRD_SIZE_Y + 1,
+      _birds[i].old_pos_x + BIRD_SIZE_X,
+      _birds[i].pos.y
+    );
+    display::oled.drawBitmap(
+      _birds[i].pos.x, _birds[i].pos.y - BIRD_SIZE_Y + 1,
+      (_game_counter % (DINO_BIRD_ANIM_STEP * 2) < DINO_BIRD_ANIM_STEP ? BIRD_0 : BIRD_1),
+      BIRD_SIZE_X, BIRD_SIZE_Y,
+      0, BUF_ADD
+    );
+  }
+
+  // Рисуем динозаврика
+  if (!controls::down_button.state()) {
+    // Если динозаврик стоит
+    display::oled.drawBitmap(
+      DINO_POS_X,
+      _dino_y - DINO_SIZE_Y + 1,
+      (_game_counter % (DINO_ANIM_STEP * 2) < DINO_ANIM_STEP) ? DINO_0 : DINO_1,
+      DINO_SIZE_X, DINO_SIZE_Y,
+      0, BUF_ADD
+    );
+  } else {
+    // Если динозаврик сидит
+    display::oled.drawBitmap(
+      DINO_POS_X,
+      _dino_y - DINO_DUCK_SIZE_Y + 1,
+      (_game_counter % (DINO_ANIM_STEP * 2) < DINO_ANIM_STEP) ? DINO_DUCK_0 : DINO_DUCK_1,
+      DINO_DUCK_SIZE_X, DINO_DUCK_SIZE_Y,
+      0, BUF_ADD
+    );
+  }
+  
+  // Обновляем все области
   display::oled.update(
     DINO_SCORE_PADDING,
     0,
     DINO_SCORE_PADDING + score_length * DISPLAY_FONT_WIDTH,
     DISPLAY_FONT_HEIGHT
   );
+  display::oled.update(
+    DINO_POS_X,
+    min(old_dino_y, _dino_y) - max(DINO_SIZE_Y, DINO_DUCK_SIZE_Y) + 2,
+    DINO_POS_X + max(DINO_SIZE_X, DINO_DUCK_SIZE_X),
+    max(old_dino_y, _dino_y) + 1
+  );
+  for (uint8_t i = 0; i < DINO_MAX_CACTI; ++i) {
+    if (_cacti[i].is_active) {
+      ucvec2 size = (_cacti[i].type == 0) ?
+        ucvec2 { CACTUS_0_SIZE_X, CACTUS_0_SIZE_Y } :
+        ucvec2 { CACTUS_1_SIZE_X, CACTUS_1_SIZE_Y };
+      display::oled.update(
+        _cacti[i].pos_x,
+        DINO_GROUND_Y - size.y + 2,
+        _cacti[i].old_pos_x + size.x,
+        DINO_GROUND_Y
+      );
+    }
+  }
+  for (uint8_t i = 0; i < DINO_MAX_BIRDS; ++i) {
+    if (_birds[i].is_active) {
+      display::oled.update(
+        _birds[i].pos.x,
+        _birds[i].pos.y - BIRD_SIZE_Y + 1,
+        _birds[i].old_pos_x + BIRD_SIZE_X + 20,
+        _birds[i].pos.y + 1
+      );
+    }
+  }
 
   return true;
+}
+
+void Dino::spawnCacti() {
+  int8_t cactus_index = -1;
+  // Ищем свободный объект кактуса
+  for (int8_t j = 0; j < DINO_MAX_CACTI; ++j) {
+    if (!_cacti[j].is_active) {
+      cactus_index = j;
+      break;
+    }
+  }
+
+  // Если больше нет свободных объектов
+  if (cactus_index == -1) {
+    return;
+  }
+
+  // Спавним кактус
+  _cacti[cactus_index] = {
+    true,
+    0,
+    DISPLAY_WIDTH + 1,
+    random(2)
+  };
+}
+
+void Dino::spawnBird() {
+  // Ищем свободный объект птицы
+  int8_t bird_index = -1;
+  for (int8_t i = 0; i < DINO_MAX_BIRDS; ++i) {
+    if (!_birds[i].is_active) {
+      bird_index = i;
+      break;
+    }
+  }
+
+  // Если нет свободных объектов
+  if (bird_index == -1) {
+    return;
+  }
+
+  int8_t bird_y = random(
+    DISPLAY_HEIGHT - DINO_BIRD_SPAWN_HEIGHT + BIRD_SIZE_Y - 1,
+    DINO_GROUND_Y
+  );
+  // Создаем птицу
+  _birds[bird_index] = {
+    true,
+    0,
+    { DISPLAY_WIDTH + 1, bird_y }
+  };
 }
