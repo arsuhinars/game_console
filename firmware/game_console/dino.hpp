@@ -11,7 +11,7 @@
 #define DINO_UPDATE_STEP    30
 
 // Смещение заголовка игры от верхнего края
-#define DINO_TITLE_MARGIN   8
+#define DINO_TITLE_MARGIN   0
 // Высота земли на экране
 #define DINO_GROUND_HEIGHT  8
 // Положение динозаврика по горизонтали
@@ -20,7 +20,7 @@
 #define DINO_SCORE_MARGIN   8
 
 // Базовая скорость движения
-#define DINO_BASE_SPEED       50
+#define DINO_BASE_SPEED       70
 // Ускорение свободного падения динозаврика
 #define DINO_GRAVITY          250
 // Ускорение при приседании динозаврика
@@ -42,7 +42,7 @@
 // Максимальная высота спавна птиц от нижнего края экрана
 #define DINO_BIRD_SPAWN_HEIGHT  58
 // Скорость движения птиц
-#define DINO_BIRD_MOVE_SPEED    25
+#define DINO_BIRD_MOVE_SPEED    15
 // Кол-во очков для смены спрайта птицы
 #define DINO_BIRD_ANIM_STEP     2
 

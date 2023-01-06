@@ -19,15 +19,15 @@ using namespace utils;
 
 #define CACTUS_0_SIZE_X   11
 #define CACTUS_0_SIZE_Y   24
-#define CACTUS_0_REAL_Y   20
+#define CACTUS_0_REAL_Y   15
 
 #define CACTUS_1_SIZE_X   17
 #define CACTUS_1_SIZE_Y   32
-#define CACTUS_1_REAL_Y   25
+#define CACTUS_1_REAL_Y   20
 
 #define BIRD_SIZE_X       23
 #define BIRD_SIZE_Y       24
-#define BIRD_REAL_Y       18
+#define BIRD_REAL_Y       14
 
 #define DINO_GROUND_Y     (DISPLAY_HEIGHT - DINO_GROUND_HEIGHT - 1)
 
@@ -104,14 +104,24 @@ bool Dino::update() {
       // Отрисовываем игру
       renderGame();
 
+      uint8_t title_scale;
+      PGM_P title_text;
+      if (_is_game_lost) {
+        title_scale = 1;
+        title_text = texts::YOU_LOSE;
+      } else {
+        title_scale = 2;
+        title_text = texts::DINO_NAME;
+      }
+
       // Отрисовываем заголовок
-      display::oled.textMode(BUF_ADD);
-      display::oled.setScale(2);
+      display::oled.textMode(BUF_REPLACE);
+      display::oled.setScale(title_scale);
       display::oled.setCursorXY(
-        DISPLAY_WIDTH / 2 - utils::rus_strlen_P(texts::DINO_NAME) * DISPLAY_FONT_WIDTH,
+        DISPLAY_WIDTH / 2 - utils::rus_strlen_P(title_text) * title_scale * DISPLAY_FONT_WIDTH / 2,
         DINO_TITLE_MARGIN
       );
-      display::oled.print(FPSTR(texts::DINO_NAME));
+      display::oled.print(FPSTR(title_text));
 
       // Рисуем подсказку о начале игры
       display::oled.setScale(1);
@@ -214,6 +224,11 @@ void Dino::renderGame() {
   display::oled.setCursorXY(DINO_SCORE_MARGIN, 0);
   uint8_t score_length = (uint8_t)display::oled.print(_game_counter);
 
+  // Находим текущии размеры динозаврика
+  ucvec2 dino_size = controls::down_button.state() ? 
+    ucvec2 { DINO_DUCK_SIZE_X, DINO_DUCK_SIZE_Y } :
+    ucvec2 { DINO_SIZE_X, DINO_SIZE_Y };
+
   // Обновляем и отрисовываем кактусы
   for (uint8_t i = 0; i < DINO_MAX_CACTI; ++i) {
     if (!_cacti[i].is_active) {
@@ -227,11 +242,27 @@ void Dino::renderGame() {
     ucvec2 size = (_cacti[i].type == 0) ?
       ucvec2 { CACTUS_0_SIZE_X, CACTUS_0_SIZE_Y } :
       ucvec2 { CACTUS_1_SIZE_X, CACTUS_1_SIZE_Y };
+    uint8_t real_size_y = (_cacti[i].type == 0) ? CACTUS_0_REAL_Y : CACTUS_1_REAL_Y;
 
     // Если кактус за границами экрана
     if (_cacti[i].pos_x + size.x < 0) {
       _cacti[i].is_active = false;
       continue;
+    }
+
+    // Проверяем на коллизию с динозавриком
+    if (
+      _dino_y <= DINO_GROUND_Y &&
+      _dino_y > DINO_GROUND_Y - real_size_y &&
+      (
+        (DINO_POS_X + dino_size.x >= _cacti[i].pos_x &&
+        DINO_POS_X + dino_size.x < _cacti[i].pos_x + size.x) ||
+        (DINO_POS_X + dino_size.x / 2 >= _cacti[i].pos_x &&
+        DINO_POS_X + dino_size.x / 2 < _cacti[i].pos_x + size.x)
+      )
+    ) {
+      _is_game_started = false;
+      _is_game_lost = true;
     }
 
     // Рисуем кактус
@@ -265,6 +296,29 @@ void Dino::renderGame() {
       continue;
     }
 
+    // Пересечение по оси X
+    bool c1 = (
+      DINO_POS_X + dino_size.x >= _birds[i].pos.x &&
+      DINO_POS_X + dino_size.x < _birds[i].pos.x + BIRD_SIZE_X
+    ) || (
+      DINO_POS_X + dino_size.x / 2 >= _birds[i].pos.x &&
+      DINO_POS_X + dino_size.x / 2 < _birds[i].pos.x + BIRD_SIZE_X
+    );
+    // Пересечение по оси Y
+    bool c2 = (
+      _dino_y > _birds[i].pos.y - BIRD_REAL_Y &&
+      _dino_y <= _birds[i].pos.y
+    ) || (
+      _dino_y - dino_size.y >= _birds[i].pos.y - BIRD_REAL_Y &&
+      _dino_y - dino_size.y < _birds[i].pos.y
+    );
+
+    // Проверяем на коллизию с игроком
+    if (c1 && c2) {
+      _is_game_started = false;
+      _is_game_lost = true;
+    }
+
     // Рисуем птицу
     display::oled.clear(
       _birds[i].old_pos_x,
@@ -281,7 +335,16 @@ void Dino::renderGame() {
   }
 
   // Рисуем динозаврика
-  if (!controls::down_button.state()) {
+  if (_is_game_lost) {
+    // Рисуем проигравшего динозаврика
+    display::oled.drawBitmap(
+      DINO_POS_X,
+      _dino_y - DINO_DEAD_SIZE_Y + 1,
+      DINO_DEAD,
+      DINO_DEAD_SIZE_X, DINO_DEAD_SIZE_Y,
+      0, BUF_ADD
+    );
+  } else if (!controls::down_button.state()) {
     // Если динозаврик стоит
     display::oled.drawBitmap(
       DINO_POS_X,
@@ -343,8 +406,9 @@ void Dino::resetGame() {
   // Сбрасываем все параметры игры
   _is_menu_rendered = false;
   _is_game_started = false;
+  _is_game_lost = false;
   _last_time = millis();
-  _next_obstacle_val = 0;
+  _next_obstacle_val = DINO_MAX_OBSTACLE_RATE;
   _old_dino_y = DINO_GROUND_Y;
   _dino_y = DINO_GROUND_Y;
   _dino_vel = 0;
