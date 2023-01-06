@@ -221,22 +221,6 @@ bool Pong::update() {
     return true;
   }
 
-  // Отрисовываем мяч
-  display::oled.drawBitmap(
-    _ball_pos.x / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
-    _ball_pos.y / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
-    ball_sprite,
-    BALL_SPRITE_SIZE,
-    BALL_SPRITE_SIZE,
-    0, BUF_REPLACE
-  );
-  display::oled.update(
-    min(_ball_pos.x, old_ball_pos.x) / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2 - 1,
-    min(_ball_pos.y, old_ball_pos.y) / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2 - 1,
-    max(_ball_pos.x, old_ball_pos.x) / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2 + 1,
-    max(_ball_pos.y, old_ball_pos.y) / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2 + 1
-  );
-
   // Отрисовываем ракетки
   display::oled.rect(
     0,
@@ -272,6 +256,24 @@ bool Pong::update() {
     text_x, 0
   );
   display::oled.print(_score_text);
+
+  // Отрисовываем мяч
+  display::oled.drawBitmap(
+    _ball_pos.x / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
+    _ball_pos.y / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2,
+    ball_sprite,
+    BALL_SPRITE_SIZE,
+    BALL_SPRITE_SIZE,
+    0, BUF_ADD
+  );
+  display::oled.update(
+    min(_ball_pos.x, old_ball_pos.x) / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2 - 1,
+    min(_ball_pos.y, old_ball_pos.y) / PONG_SUBPIXELS_COUNT - BALL_SPRITE_SIZE / 2 - 1,
+    max(_ball_pos.x, old_ball_pos.x) / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2 + 1,
+    max(_ball_pos.y, old_ball_pos.y) / PONG_SUBPIXELS_COUNT + BALL_SPRITE_SIZE / 2 + 1
+  );
+
+  // Обновляем область текста
   display::oled.update(
     text_x,
     0,
