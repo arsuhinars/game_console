@@ -1,5 +1,6 @@
 #pragma once
 
+#define EB_HOLD   200   // Время удержания кнопки
 #include <EncButton.h>
 
 // Раскомментируйте для отладки ввода
