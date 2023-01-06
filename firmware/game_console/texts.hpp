@@ -22,4 +22,8 @@ namespace texts {
   extern const char LEFT_WIN[] PROGMEM;
   extern const char RIGHT_WIN[] PROGMEM;
   extern const char DRAW[] PROGMEM;
+
+  // Текст для игры Dino
+  extern const char START_HINT[] PROGMEM;
+  extern const char EXIT_HINT[] PROGMEM;
 } // namespace texts

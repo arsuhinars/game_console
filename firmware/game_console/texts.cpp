@@ -18,3 +18,7 @@ const char texts::YOU_LOSE[] PROGMEM = "Вы проиграли";
 const char texts::LEFT_WIN[] PROGMEM = "1 игрок выиграл";
 const char texts::RIGHT_WIN[] PROGMEM = "2 игрок выиграл";
 const char texts::DRAW[] PROGMEM = "Ничья";
+
+// Текст для игры Dino
+const char texts::START_HINT[] PROGMEM = "A/UP - играть";
+const char texts::EXIT_HINT[] PROGMEM = "B - выйти";
