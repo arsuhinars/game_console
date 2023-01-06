@@ -10,14 +10,14 @@
 // Время одного шага обновления игры
 #define DINO_UPDATE_STEP    30
 
+// Смещение заголовка игры от верхнего края
+#define DINO_TITLE_MARGIN   8
 // Высота земли на экране
 #define DINO_GROUND_HEIGHT  8
 // Положение динозаврика по горизонтали
 #define DINO_POS_X          8
 // Отступ текста со счетом от левого края
-#define DINO_SCORE_PADDING  8
-// Отступы между кактусами
-#define DINO_CACTUS_PADDING 2
+#define DINO_SCORE_MARGIN   8
 
 // Базовая скорость движения
 #define DINO_BASE_SPEED       50
@@ -66,20 +66,26 @@ private:
     uint8_t type;             // Тип кактуса. 0 - маленький, 1 - большой
   } _cacti[DINO_MAX_CACTI];   // Пул всех кактусов на экране
 
+  bool _is_menu_rendered;     // Было ли уже отрисовано меню
   bool _is_game_started;      // Запущена ли игра
+  bool _is_game_lost = false; // Проиграл ли игрок
   unsigned long _last_time;   // Игровой таймер
 
   // Кол-во очков для спавна следующего препятствия
   uint16_t _next_obstacle_val;
 
+  int16_t _old_dino_y;        // Позиция динозаврика в прошлом кадре
   int16_t _dino_y;            // Координата динозаврика по Y
   int16_t _dino_vel;          // Скорость динозаврика по Y
 
   uint8_t _frame_counter;     // Счетчик кадров
   uint16_t _game_counter;     // Счетчик игры
 
-  /// Метод запуска игры
-  void startGame();
+  /// Метод отрисовки игры
+  void renderGame();
+
+  /// Метод сброса состояния игры
+  void resetGame();
   
   /// Метод спавна кактусов
   void spawnCacti();

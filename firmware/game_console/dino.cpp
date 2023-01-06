@@ -2,6 +2,7 @@
 
 #include "display.hpp"
 #include "controls.hpp"
+#include "texts.hpp"
 #include "dino.hpp"
 
 using namespace utils;
@@ -81,17 +82,7 @@ const uint8_t BIRD_1[] PROGMEM = {
 };
 
 Dino::Dino() {
-  // При запуске игры очищаем экран
-  display::oled.clear();
-
-  // Рисуем землю и выводим её на экран
-  display::oled.fastLineH(DINO_GROUND_Y + 1, 0, DISPLAY_WIDTH - 1);
-  display::oled.update();
-
-  // Устанавливаем некоторые параметры в стандартное значение
-  _next_obstacle_val = 0;
-  _game_counter = 0;
-  _dino_y = DINO_GROUND_Y;
+  resetGame();
 
   // Сбрасываем состояния кнопок
   controls::resetStates();
@@ -104,70 +95,123 @@ bool Dino::update() {
   }
   _last_time = millis();
 
-  int8_t old_dino_y = _dino_y;
+  // Если игра не запущена
+  if (!_is_game_started) {
+    // Рисуем меню
+    if (!_is_menu_rendered) {
+      _is_menu_rendered = true;
 
-  // Обновляем гравитацию
-  if (controls::down_button.state()) {
-    _dino_vel += DINO_DUCK_GRAVITY * DINO_UPDATE_STEP / 1000;
-  } else {
-    _dino_vel += DINO_GRAVITY * DINO_UPDATE_STEP / 1000;
-  }
+      // Отрисовываем игру
+      renderGame();
 
-  // Тип прыжка, 0 - нет, 1 - обычный, 2 - высокий
-  uint8_t jump_type = 0;
-  if (controls::up_button.release() || controls::button_a.release()) {
-    jump_type = 1;
-  }
-  else if (controls::up_button.hold() || controls::button_a.hold()) {
-    jump_type = 2;
-  }
+      // Отрисовываем заголовок
+      display::oled.textMode(BUF_ADD);
+      display::oled.setScale(2);
+      display::oled.setCursorXY(
+        DISPLAY_WIDTH / 2 - utils::rus_strlen_P(texts::DINO_NAME) * DISPLAY_FONT_WIDTH,
+        DINO_TITLE_MARGIN
+      );
+      display::oled.print(FPSTR(texts::DINO_NAME));
 
-  // Если динозаврик на земле и не в присяди
-  if (jump_type > 0 && _dino_y >= DINO_GROUND_Y && !controls::down_button.state()) {
-    _dino_vel = jump_type == 1 ? -DINO_JUMP_SPEED : -DINO_HIGH_JUMP_SPEED;
-  }
+      // Рисуем подсказку о начале игры
+      display::oled.setScale(1);
+      display::oled.setCursorXY(
+        DISPLAY_WIDTH / 2 - utils::rus_strlen_P(texts::START_HINT) * DISPLAY_FONT_WIDTH / 2,
+        DINO_TITLE_MARGIN + DISPLAY_FONT_HEIGHT * 2
+      );
+      display::oled.print(FPSTR(texts::START_HINT));
 
-  // Перемещаяем в соответствии со скоростью
-  _dino_y += _dino_vel * DINO_UPDATE_STEP / 1000;
+      // Рисуем подсказку о выходе из игры
+      display::oled.setCursorXY(
+        DISPLAY_WIDTH / 2 - utils::rus_strlen_P(texts::EXIT_HINT) * DISPLAY_FONT_WIDTH / 2,
+        DINO_TITLE_MARGIN + DISPLAY_FONT_HEIGHT * 3
+      );
+      display::oled.print(FPSTR(texts::EXIT_HINT));
 
-  // Обрабатываем столкновение с землей
-  if (_dino_y > DINO_GROUND_Y) {
-    _dino_y = DINO_GROUND_Y;
-    _dino_vel = 0;
-  }
-
-  // Если нужно спавнить препятствие
-  if (_game_counter >= _next_obstacle_val) {
-    _next_obstacle_val = _game_counter + random(DINO_MIN_OBSTACLE_RATE, DINO_MAX_OBSTACLE_RATE + 1);
-
-    if (!random(DINO_BIRD_SPAWN_RATE)) {
-      // Спавним птицу
-      spawnBird();
-    } else {
-      spawnCacti();
+      // Выводим все на экран
+      display::oled.update();
     }
+
+    // Обрабатываем нажатия
+    if (controls::up_button.press() || controls::button_a.press()) {
+      resetGame();
+      _is_game_started = true;
+    } else if (controls::button_b.press()) {
+      return false;
+    }
+  } else {  // Если игра запущена
+    _old_dino_y = _dino_y;
+    
+    // Обновляем гравитацию
+    if (controls::down_button.state()) {
+      _dino_vel += DINO_DUCK_GRAVITY * DINO_UPDATE_STEP / 1000;
+    } else {
+      _dino_vel += DINO_GRAVITY * DINO_UPDATE_STEP / 1000;
+    }
+
+    // Тип прыжка, 0 - нет, 1 - обычный, 2 - высокий
+    uint8_t jump_type = 0;
+    if (controls::up_button.release() || controls::button_a.release()) {
+      jump_type = 1;
+    }
+    else if (controls::up_button.hold() || controls::button_a.hold()) {
+      jump_type = 2;
+    }
+
+    // Если динозаврик на земле и не в присяди
+    if (jump_type > 0 && _dino_y >= DINO_GROUND_Y && !controls::down_button.state()) {
+      _dino_vel = jump_type == 1 ? -DINO_JUMP_SPEED : -DINO_HIGH_JUMP_SPEED;
+    }
+
+    // Перемещаяем в соответствии со скоростью
+    _dino_y += _dino_vel * DINO_UPDATE_STEP / 1000;
+
+    // Обрабатываем столкновение с землей
+    if (_dino_y > DINO_GROUND_Y) {
+      _dino_y = DINO_GROUND_Y;
+      _dino_vel = 0;
+    }
+
+    // Если нужно спавнить препятствие
+    if (_game_counter >= _next_obstacle_val) {
+      _next_obstacle_val = _game_counter + random(DINO_MIN_OBSTACLE_RATE, DINO_MAX_OBSTACLE_RATE + 1);
+
+      if (!random(DINO_BIRD_SPAWN_RATE)) {
+        // Спавним птицу
+        spawnBird();
+      } else {
+        spawnCacti();
+      }
+    }
+
+    // Увеличиваем счетчик кадров
+    if (++_frame_counter > DINO_BASE_SCORE_RATE) {
+      // Увеличиваем счет игры в соотвествии со скоростью
+      ++_game_counter;
+      // Сбрасываем счетчик кадров
+      _frame_counter = 0;
+    }
+
+    // Отрисовываем игру
+    renderGame();
   }
 
-  // Увеличиваем счетчик кадров
-  if (++_frame_counter > DINO_BASE_SCORE_RATE) {
-    // Увеличиваем счет игры в соотвествии со скоростью
-    ++_game_counter;
-    // Сбрасываем счетчик кадров
-    _frame_counter = 0;
-  }
+  return true;
+}
 
+void Dino::renderGame() {
   // Очищаем область для динозаврика
   display::oled.clear(
     DINO_POS_X,
-    old_dino_y - max(DINO_SIZE_Y, DINO_DUCK_SIZE_Y) + 1,
+    _old_dino_y - max(DINO_SIZE_Y, DINO_DUCK_SIZE_Y) + 1,
     DINO_POS_X + max(DINO_SIZE_X, DINO_DUCK_SIZE_X) - 1,
-    old_dino_y
+    _old_dino_y
   );
   
   // Выводим счет на экран
   display::oled.textMode(BUF_REPLACE);
   display::oled.setScale(1);
-  display::oled.setCursorXY(DINO_SCORE_PADDING, 0);
+  display::oled.setCursorXY(DINO_SCORE_MARGIN, 0);
   uint8_t score_length = (uint8_t)display::oled.print(_game_counter);
 
   // Обновляем и отрисовываем кактусы
@@ -257,18 +301,18 @@ bool Dino::update() {
     );
   }
   
-  // Обновляем все области
+  // Обновляем все области на экране
   display::oled.update(
-    DINO_SCORE_PADDING,
+    DINO_SCORE_MARGIN,
     0,
-    DINO_SCORE_PADDING + score_length * DISPLAY_FONT_WIDTH,
+    DINO_SCORE_MARGIN + score_length * DISPLAY_FONT_WIDTH,
     DISPLAY_FONT_HEIGHT
   );
   display::oled.update(
     DINO_POS_X,
-    min(old_dino_y, _dino_y) - max(DINO_SIZE_Y, DINO_DUCK_SIZE_Y) + 2,
+    min(_old_dino_y, _dino_y) - max(DINO_SIZE_Y, DINO_DUCK_SIZE_Y) + 2,
     DINO_POS_X + max(DINO_SIZE_X, DINO_DUCK_SIZE_X),
-    max(old_dino_y, _dino_y) + 1
+    max(_old_dino_y, _dino_y) + 1
   );
   for (uint8_t i = 0; i < DINO_MAX_CACTI; ++i) {
     if (_cacti[i].is_active) {
@@ -293,8 +337,36 @@ bool Dino::update() {
       );
     }
   }
+}
 
-  return true;
+void Dino::resetGame() {
+  // Сбрасываем все параметры игры
+  _is_menu_rendered = false;
+  _is_game_started = false;
+  _last_time = millis();
+  _next_obstacle_val = 0;
+  _old_dino_y = DINO_GROUND_Y;
+  _dino_y = DINO_GROUND_Y;
+  _dino_vel = 0;
+  _frame_counter = 0;
+  _game_counter = 0;
+
+  // Сбрасываем все объекты
+  for (uint8_t i = 0; i < DINO_MAX_CACTI; ++i) {
+    _cacti[i].is_active = false;
+  }
+  for (uint8_t i = 0; i < DINO_MAX_BIRDS; ++i) {
+    _birds[i].is_active = false;
+  }
+
+  // Очищаем экран
+  display::oled.clear();
+  // Рисуем землю и выводим её на экран
+  display::oled.fastLineH(DINO_GROUND_Y + 1, 0, DISPLAY_WIDTH - 1);
+  // Отрисовываем кадр игры
+  renderGame();
+  // Обновляем экран
+  display::oled.update();
 }
 
 void Dino::spawnCacti() {
