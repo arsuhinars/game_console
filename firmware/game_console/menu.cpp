@@ -86,6 +86,8 @@ void Menu::update() {
   }
   _need_redraw = false;
 
+  display::oled.clear();
+
   display::oled.textMode(BUF_REPLACE);
 
   int item_y = 0;
@@ -96,19 +98,19 @@ void Menu::update() {
 
     // Отрисовываем заголовок
     display::oled.setScale(_title_scale);
-    display::oled.clear(0, 0, title_x - 1, DISPLAY_FONT_HEIGHT * _title_scale - 1);
-    display::oled.clear(
-      title_x + title_length * DISPLAY_FONT_WIDTH * _title_scale,
-      0,
-      DISPLAY_WIDTH - 1,
-      DISPLAY_FONT_HEIGHT * _title_scale - 1
-    );
-    display::oled.clear(
-      0,
-      DISPLAY_FONT_HEIGHT * _title_scale,
-      DISPLAY_WIDTH - 1,
-      title_height - 1
-    );
+    // display::oled.clear(0, 0, title_x - 1, DISPLAY_FONT_HEIGHT * _title_scale - 1);
+    // display::oled.clear(
+    //   title_x + title_length * DISPLAY_FONT_WIDTH * _title_scale,
+    //   0,
+    //   DISPLAY_WIDTH - 1,
+    //   DISPLAY_FONT_HEIGHT * _title_scale - 1
+    // );
+    // display::oled.clear(
+    //   0,
+    //   DISPLAY_FONT_HEIGHT * _title_scale,
+    //   DISPLAY_WIDTH - 1,
+    //   title_height - 1
+    // );
     display::oled.setCursorXY(title_x, 0);
     display::oled.print(_title);
 
@@ -121,13 +123,13 @@ void Menu::update() {
     size_t item_length = rus_strlen_P((PGM_P)pgm_read_word(&_items[i]));
     int item_x = DISPLAY_WIDTH / 2 - item_length * DISPLAY_FONT_WIDTH / 2;
 
-    display::oled.clear(0, item_y, item_x - 1, item_y + MENU_ITEM_HEIGHT - 1);
-    display::oled.clear(
-      item_x + item_length * DISPLAY_FONT_WIDTH,
-      item_y,
-      DISPLAY_WIDTH - 1,
-      item_y + MENU_ITEM_HEIGHT - 1
-    );
+    // display::oled.clear(0, item_y, item_x - 1, item_y + MENU_ITEM_HEIGHT - 1);
+    // display::oled.clear(
+    //   item_x + item_length * DISPLAY_FONT_WIDTH,
+    //   item_y,
+    //   DISPLAY_WIDTH - 1,
+    //   item_y + MENU_ITEM_HEIGHT - 1
+    // );
     display::oled.setCursorXY(item_x, item_y);
     display::oled.print(FPSTR(pgm_read_word(&_items[i])));
 
@@ -154,7 +156,7 @@ void Menu::update() {
   }
 
   // Очищаем оставшуюся часть
-  display::oled.clear(0, item_y, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
+  // display::oled.clear(0, item_y, DISPLAY_WIDTH - 1, DISPLAY_HEIGHT - 1);
 
   if (_items_count > max_display_items) {
     uint8_t n = _items_count - max_display_items + 1;
