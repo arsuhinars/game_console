@@ -91,13 +91,14 @@ bool Snake::update() {
     _menu.update();
 
     if (_menu.clickedItem() != -1) {
-      if (_menu.clickedItem() == 0) {
-        _menu.handleClickedItem();
-        startGame();
-        return true;
-      } else {
-        return false;
+      // Нажата кнопка выхода из игры
+      if (_menu.clickedItem() == 1) {
+        return false
       }
+
+      // Нажата кнопка запуска игры
+      startGame();
+      _menu.handleClickedItem();
     }
 
     return true;
