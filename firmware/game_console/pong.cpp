@@ -29,9 +29,11 @@ bool Pong::update() {
     case GameState::MAIN_MENU:
       _menu.update();
 
+      // Нажата кнопка выхода их игры
       if (_menu.clickedItem() == 2) {
         return false;
       } else if (_menu.clickedItem() != -1) {
+        // Запускаем нужную игру
         _game_data.type = 
           _menu.clickedItem() == 0 ?
           GameType::ONE_PLAYER :
