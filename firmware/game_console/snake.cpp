@@ -93,7 +93,7 @@ bool Snake::update() {
     if (_menu.clickedItem() != -1) {
       // Нажата кнопка выхода из игры
       if (_menu.clickedItem() == 1) {
-        return false
+        return false;
       }
 
       // Нажата кнопка запуска игры
