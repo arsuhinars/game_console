@@ -12,10 +12,10 @@ public:
 
 // Тип функции, создающей объект класса игры
 // и возвращающей его в виде указателя.
-typedef Game* (*GameBuilder)();
+typedef Game* (*GameCreator)();
 
 template <class T>
-constexpr GameBuilder addGame() {
+constexpr GameCreator getGameCreator() {
   return [] {
     return static_cast<Game*>(new T());
   };
