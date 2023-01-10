@@ -4,6 +4,11 @@
 #include "game.hpp"
 #include "utils.hpp"
 
+// Время шага обновления игры
+#define TETRIS_UPDATE_STEP      300
+// Время быстрого шага
+#define TETRIS_FAST_UPDATE_STEP 100
+
 // Размер одного блока в пикселях
 #define TETRIS_BLOCK_SIZE     8
 
@@ -15,7 +20,7 @@
 #define TETRIS_PREVIEW_X      92
 #define TETRIS_PREVIEW_Y      8
 // Размер этого окна в блоках
-#define TERTIS_PREVIEW_WIDTH  4
+#define TETRIS_PREVIEW_WIDTH  4
 #define TETRIS_PREVIEW_HEIGHT 4
 
 // Начальная позиция фигуры при её появлении
@@ -53,7 +58,7 @@ private:
   uint8_t _curr_figure;       // Индекс текущей фигуры
   uint8_t _next_figure;       // Индекс следующей фигуры
   uint8_t _curr_figure_rot;   // Поворот фигуры
-  cvec2 _figure_pos;          // Её позиция на поле
+  utils::cvec2 _figure_pos;   // Её позиция на поле
 
   // "Сумка" с фигурами.
   bool _figures_bag[TETRIS_FIGURES_COUNT];
@@ -68,10 +73,4 @@ private:
   /// Получить индекс следующей случайной фигуры
   /// При этом фигура вынимается из "сумки"
   uint8_t getNextFigure();
- 
-  /// Метод отрисовки блока на поле
-  void drawBlock(int8_t x, int8_t y);
-
-  /// Метод очистки блока на поле
-  void clearBlock(int8_t x, int8_t y);
 };
