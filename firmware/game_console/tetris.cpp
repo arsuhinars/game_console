@@ -9,14 +9,12 @@
 #define TETRIS_FIELD_X  ((DISPLAY_WIDTH - TETRIS_FIELD_WIDTH * TETRIS_BLOCK_SIZE) / 2)
 #define TETRIS_FIELD_Y  ((DISPLAY_HEIGHT - TETRIS_FIELD_HEIGHT * TETRIS_BLOCK_SIZE) / 2)
 
-// Максимальный размер фигуры
-#define TETRIS_FIGURE_WIDTH       4
-#define TETRIS_FIGURE_HEIGHT      4
-// Опорная координата
-#define TETRIS_FIGURE_ORIGIN_X    1
-#define TETRIS_FIGURE_ORIGIN_Y    1
 // Макс. кол-во вращений фигуры
 #define TETRIS_FIGURE_ROTATIONS   4
+
+// Кол-во блоков в фигуре тетрамино.
+// Содержит 4 блока по определению фигуры тетрамино
+#define TETRIS_FIGURE_BLOCKS_COUNT    4
 
 using namespace utils;
 
@@ -25,203 +23,26 @@ const uint8_t TETRIS_BLOCK[] PROGMEM = {
 	0x00, 0x7E, 0x42, 0x5A, 0x5A, 0x42, 0x7E, 0x00, 
 };
 
-// Массив с описанием фигуры
-// 1 индекс - индекс вращения
-// 2 индекс - координата по горизонтали
-// 3 - по вертикали
-typedef bool TetrisFigure[TETRIS_FIGURE_ROTATIONS][TETRIS_FIGURE_WIDTH][TETRIS_FIGURE_HEIGHT];
+// Тип для описания фигуры. Представляет из себя массив с координатами
+// каждого блока фигуры относительно центра. 
+typedef cvec2 TetrisFigure[TETRIS_FIGURE_BLOCKS_COUNT];
 
 // Массив со всеми фигурами
 const TetrisFigure TETRIS_FIGURES[TETRIS_FIGURES_COUNT] PROGMEM = {
   // Фигура L
-  {
-    {
-      { 0, 0, 0, 0 },
-      { 1, 1, 1, 0 },
-      { 0, 0, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 1, 1, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 1, 0, 0, 0 },
-      { 1, 1, 1, 0 },
-      { 0, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    }
-  },
+  { { 0, -1 }, { 0, 0 }, { 0, 1 }, { 1, 1 } },
   // Фигура J
-  {
-    {
-      { 0, 0, 1, 0 },
-      { 1, 1, 1, 0 },
-      { 0, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 1, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 1, 1, 1, 0 },
-      { 1, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    }
-  },
+  { { 0, -1 }, { 0, 0 }, { 0, 1 }, { -1, 1 } },
   // Фигура Z
-  {
-    {
-      { 1, 0, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 1, 0, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 0, 0, 0 }
-    }
-  },
+  { { -1, 0 }, { 0, 0 }, { 0, 1 }, { 1, 1 } },
   // Фигура S
-  {
-    {
-      { 0, 1, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 1, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 1, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 1, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    }
-  },
+  { { -1, 1 }, { 0, 1 }, { 0, 0 }, { 1, 0 } },
   // Фигура T
-  {
-    {
-      { 1, 0, 0, 0 },
-      { 1, 1, 0, 0 },
-      { 1, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 1, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 1, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 1, 1, 1, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    }
-  },
+  { { -1, 0 }, { 0, 0 }, { 1, 0 }, { 0, 1 } },
   // Фигура I
-  {
-    {
-      { 0, 0, 0, 0 },
-      { 1, 1, 1, 1 },
-      { 0, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 1, 1, 1, 1 },
-      { 0, 0, 0, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 },
-      { 0, 1, 0, 0 }
-    }
-  },
+  { { 0, -1 }, { 0, 0 }, { 0, 1 }, { 0, 2 } },
   // Фигура O
-  {
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    },
-    {
-      { 0, 0, 0, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 1, 1, 0 },
-      { 0, 0, 0, 0 }
-    }
-  }
+  { { -1, -1 }, { 0, -1 }, { 0, 0 }, { -1, 0 } }
 };
 
 const char* const TETRIS_MENU_ITEMS[] PROGMEM = {
@@ -257,92 +78,110 @@ bool Tetris::update() {
   }
   _last_time = millis();
 
-  // Двумерный массив с данными текущей фигуры
-  bool figure_data[TETRIS_FIGURE_WIDTH][TETRIS_FIGURE_HEIGHT];
   // Получаем данные текущей фигуры
-  memcpy_P(figure_data, TETRIS_FIGURES[_curr_figure][_curr_figure_rot], sizeof(figure_data));
+  TetrisFigure figure;
+  // Получаем данные текущей фигуры
+  memcpy_P(figure, TETRIS_FIGURES[_curr_figure], sizeof(TetrisFigure));
 
-  // Остановлена ли фигура другим блоком
-  bool is_blocked = false;
+  // Границы для обновления экрана
+  auto draw_bound_min = _bound_min;
+  auto draw_bound_max = _bound_max;
 
-  // Перебираем клетки фигуры
-  cvec2 pos = { 
-    _figure_pos.x - TETRIS_INITIAL_FIGURE_X,
-    _figure_pos.y - TETRIS_INITIAL_FIGURE_Y
-  };
-  for (int8_t i = 0; i < TETRIS_FIGURE_WIDTH; ++i) {
-    for (int8_t j = 0; j < TETRIS_FIGURE_HEIGHT; ++j) {
-      if (!figure_data[i][j]) {
-        continue;
-      }
+  // Перебираем блоки фигуры
+  bool is_dropped = false;
+  for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+    // Позиция текущего блока на поле
+    auto pos = transformPoint(_figure_pos, _figure_rot, figure[i]);
 
-      // Если блок уже занят
-      if (_field[pos.x + i][pos.y + j]) {
-        // Игрок проиграл
-        _is_game_started = false;
-        _menu.setTitle(FPSTR(texts::YOU_LOSE));
-        _menu.setTitleScale(1);
-        _menu.forceRedraw();
-        controls::resetStates();
-        return true;
-      }
+    // Обновляем границы
+    draw_bound_min = {
+      min(draw_bound_min.x, pos.x),
+      min(draw_bound_min.y, pos.y)
+    };
+    draw_bound_max = {
+      max(draw_bound_max.x, pos.x),
+      max(draw_bound_max.y, pos.y)
+    };
+    if (i == 0) {
+      _bound_min = pos;
+      _bound_max = pos;
+    } else {
+      _bound_min = {
+        min(_bound_min.x, pos.x),
+        min(_bound_min.y, pos.y)
+      };
+      _bound_max = {
+        max(_bound_max.x, pos.x),
+        max(_bound_max.y, pos.y)
+      };
+    }
 
-      // Если блок ниже текущего занят
-      if (pos.y + j + 1 == TETRIS_FIELD_HEIGHT || _field[pos.x + i][pos.y + j + 1]) {
-        is_blocked = true;
-      }
-      
-      if (pos.y + j >= 0) {
-        // Отрисовываем текущий блок
-        display::oled.drawBitmap(
-          TETRIS_FIELD_X + (pos.x + i) * TETRIS_BLOCK_SIZE,
-          TETRIS_FIELD_Y + (pos.y + j) * TETRIS_BLOCK_SIZE,
-          TETRIS_BLOCK,
-          TETRIS_BLOCK_SIZE, TETRIS_BLOCK_SIZE
-        );
-      }
+    // Если блок уже занят
+    if (_field[pos.x][pos.y]) {
+      // Игрок проиграл
+      _is_game_started = false;
+      _menu.setTitle(FPSTR(texts::YOU_LOSE));
+      _menu.setTitleScale(1);
+      _menu.forceRedraw();
+      controls::resetStates();
+      return true;
+    }
+
+    // Если блок ниже текущего занят
+    if (pos.y + 1 == TETRIS_FIELD_HEIGHT || _field[pos.x][pos.y + 1]) {
+      is_dropped = true;
+    }
+
+    if (pos.y >= 0) {
+      // Рисуем текущий блок
+      display::oled.drawBitmap(
+        TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_Y + pos.y * TETRIS_BLOCK_SIZE,
+        TETRIS_BLOCK,
+        TETRIS_BLOCK_SIZE, TETRIS_BLOCK_SIZE
+      );
     }
   }
 
-  // Обновляем область фигуры
+  if (was_dropped) {
+    draw_bound_min = _bound_min;
+    draw_bound_max = _bound_max;
+  }
+  was_dropped = is_dropped;
+
+  // Обновляем только изменившуюся область
   display::oled.update(
-    TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE,
-    TETRIS_FIELD_Y + (pos.y - 1) * TETRIS_BLOCK_SIZE,
-    TETRIS_FIELD_X + (pos.x + TETRIS_FIGURE_WIDTH - 1) * TETRIS_BLOCK_SIZE,
-    TETRIS_FIELD_Y + (pos.y + TETRIS_FIGURE_HEIGHT - 1) * TETRIS_BLOCK_SIZE
+    TETRIS_FIELD_X + draw_bound_min.x * TETRIS_BLOCK_SIZE,
+    TETRIS_FIELD_Y + draw_bound_min.y * TETRIS_BLOCK_SIZE,
+    TETRIS_FIELD_X + (draw_bound_max.x + 1) * TETRIS_BLOCK_SIZE,
+    TETRIS_FIELD_Y + (draw_bound_max.y + 1) * TETRIS_BLOCK_SIZE
   );
  
-  if (is_blocked) {
+  if (is_dropped) {
     // Оставляем фигуру и берем следующую
     _figure_pos = { TETRIS_INITIAL_FIGURE_X, TETRIS_INITIAL_FIGURE_Y };
-    _curr_figure_rot = 0;
+    _figure_rot = 0;
     _curr_figure = _next_figure;
     _next_figure = getNextFigure();
     drawFigurePreview();
 
     // Заполняем блоки фигуры на поле
-    for (int8_t i = 0; i < TETRIS_FIGURE_WIDTH; ++i) {
-      for (int8_t j = 0; j < TETRIS_FIGURE_HEIGHT; ++j) {
-        if (figure_data[i][j]) {
-          _field[pos.x + i][pos.y + j] = true;
-        }
-      }
+    for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+      auto pos = transformPoint(_figure_pos, _figure_rot, figure[i]);
+      _field[pos.x][pos.y] = true;
     }
 
     return true;
   } else {
     // Очищаем фигуру
-    for (int8_t i = 0; i < TETRIS_FIGURE_WIDTH; ++i) {
-      for (int8_t j = 0; j < TETRIS_FIGURE_HEIGHT; ++j) {
-        if (figure_data[i][j] && pos.y + j >= 0) {
-          display::oled.clear(
-            TETRIS_FIELD_X + (pos.x + i) * TETRIS_BLOCK_SIZE,
-            TETRIS_FIELD_Y + (pos.y + j) * TETRIS_BLOCK_SIZE,
-            TETRIS_FIELD_X + (pos.x + i + 1) * TETRIS_BLOCK_SIZE - 1,
-            TETRIS_FIELD_Y + (pos.y + j + 1) * TETRIS_BLOCK_SIZE - 1
-          );
-        }
-      }
+    for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+      auto pos = transformPoint(_figure_pos, _figure_rot, figure[i]);
+      display::oled.clear(
+        TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_Y + pos.y * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_X + (pos.x + 1) * TETRIS_BLOCK_SIZE - 1,
+        TETRIS_FIELD_Y + (pos.y + 1) * TETRIS_BLOCK_SIZE - 1
+      );
     }
   }
 
@@ -357,85 +196,60 @@ bool Tetris::update() {
   }
 
   if (move_type != 0) {
+    cvec2 new_figure_pos = _figure_pos;
     switch (move_type) {
       case 1:
-        pos.x -= 1;
+        new_figure_pos.x -= 1;
         break;
       case 2:
-        pos.x += 1;
+        new_figure_pos.x += 1;
         break;
     }
 
     // Проверяем фигуру на новой позиции
-    for (int8_t i = 0; i < TETRIS_FIGURE_WIDTH; ++i) {
-      for (int8_t j = 0; j < TETRIS_FIGURE_HEIGHT; ++j) {
-        if (!figure_data[i][j]) {
-          continue;
-        }
+    for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+      auto pos = transformPoint(new_figure_pos, _figure_rot, figure[i]);
 
-        // Если вышли за край
-        if (
-          pos.x + i >= TETRIS_FIELD_WIDTH ||
-          pos.x + i < 0
-        ) {
-          return true;
-        }
-
-        // Если уперлись в блок на поле
-        if (_field[pos.x + i][pos.y + j]) {
-          return true;
-        }
+      // Если вышли за край или уперлись в блок на поле
+      if (
+        pos.x >= TETRIS_FIELD_WIDTH ||
+        pos.x < 0 ||
+        _field[pos.x][pos.y]
+      ) {
+        return true;
       }
     }
 
     // Сдвигаем фигуру
-    switch (move_type) {
-      case 1:
-        _figure_pos.x -= 1;
-        break;
-      case 2:
-        _figure_pos.x += 1;
-        break;
-    }
+    _figure_pos = new_figure_pos;
     
     return true;
   }
 
   // Если нажата кнопка вращения
   if (controls::button_a.press()) {
-    // Получаем данные повернутой фигуры
-    bool new_figure_data[4][4];
-    memcpy_P(
-      new_figure_data,
-      TETRIS_FIGURES[_curr_figure][(_curr_figure_rot + 1) % TETRIS_FIGURE_ROTATIONS],
-      sizeof(new_figure_data)
-    );
-
     // Проверяем новую фигуру
-    for (int8_t i = 0; i < TETRIS_FIGURE_WIDTH; ++i) {
-      for (int8_t j = 0; j < TETRIS_FIGURE_HEIGHT; ++j) {
-        if (!new_figure_data[i][j]) {
-          continue;
-        }
+    for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+      auto pos = transformPoint(
+        _figure_pos,
+        (_figure_rot + 1) % TETRIS_FIGURE_ROTATIONS,
+        figure[i]
+      );
 
-        // Если новая фигура вышла за границу
-        if (
-          pos.x + i >= TETRIS_FIELD_WIDTH ||
-          pos.x + i < 0 ||
-          pos.y + j >= TETRIS_FIELD_HEIGHT ||
-          pos.y + j < 0
-        ) {
-          return true;
-        }
-
-        // Если новая фигура столкнулась с блоками на поле
-        if (_field[pos.x + i][pos.y + j]) {
-          return true;
-        }
+      // Если новая фигура вышла за границу или столкнулась с блоками на поле
+      if (
+        pos.x >= TETRIS_FIELD_WIDTH ||
+        pos.x < 0 ||
+        pos.y >= TETRIS_FIELD_HEIGHT ||
+        pos.y < 0 ||
+        _field[pos.x][pos.y]
+      ) {
+        return true;
       }
     }
 
-    _curr_figure_rot = (_curr_figure_rot + 1) % TETRIS_FIGURE_ROTATIONS;
+    // Применяем вращение
+    _figure_rot = (_figure_rot + 1) % TETRIS_FIGURE_ROTATIONS;
   }
 
   return true;
@@ -457,7 +271,7 @@ void Tetris::startGame() {
     TETRIS_PREVIEW_X - 1,
     TETRIS_PREVIEW_Y - 1,
     TETRIS_PREVIEW_X + TETRIS_PREVIEW_WIDTH * TETRIS_BLOCK_SIZE,
-    TETRIS_PREVIEW_Y + TETRIS_FIELD_HEIGHT * TETRIS_BLOCK_SIZE,
+    TETRIS_PREVIEW_Y + TETRIS_PREVIEW_HEIGHT * TETRIS_BLOCK_SIZE,
     OLED_STROKE
   );
 
@@ -478,11 +292,11 @@ void Tetris::startGame() {
   _is_game_started = true;
   _score = 0;
   _last_time = millis();
-
   _curr_figure = getNextFigure();
   _next_figure = getNextFigure();
-  _curr_figure_rot = 0;
+  _figure_rot = 0;
   _figure_pos = { TETRIS_INITIAL_FIGURE_X, TETRIS_INITIAL_FIGURE_Y };
+  was_dropped = true;
 
   drawFigurePreview();
 
@@ -502,20 +316,18 @@ void Tetris::drawFigurePreview() {
     TETRIS_PREVIEW_X + TETRIS_PREVIEW_WIDTH * TETRIS_BLOCK_SIZE - 1,
     TETRIS_PREVIEW_Y + TETRIS_FIELD_HEIGHT * TETRIS_BLOCK_SIZE - 1
   );
+
   // Рисуем блоки данной фигуры
-  for (uint8_t x = 0; x < TETRIS_FIGURE_WIDTH; ++x) {
-    for (uint8_t y = 0; y < TETRIS_FIGURE_HEIGHT; ++y) {
-      if (figure[0][x][y]) {
-        display::oled.drawBitmap(
-          TETRIS_PREVIEW_X + x * TETRIS_BLOCK_SIZE,
-          TETRIS_PREVIEW_Y + y * TETRIS_BLOCK_SIZE,
-          TETRIS_BLOCK,
-          TETRIS_BLOCK_SIZE,
-          TETRIS_BLOCK_SIZE
-        );
-      }
-    }
+  for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+    display::oled.drawBitmap(
+      TETRIS_PREVIEW_X + (figure[i].x + TETRIS_PREVIEW_FIGURE_X) * TETRIS_BLOCK_SIZE,
+      TETRIS_PREVIEW_Y + (figure[i].y + TETRIS_PREVIEW_FIGURE_Y) * TETRIS_BLOCK_SIZE,
+      TETRIS_BLOCK,
+      TETRIS_BLOCK_SIZE,
+      TETRIS_BLOCK_SIZE
+    );
   }
+  
   // Выводим эту область на экран
   display::oled.update(
     TETRIS_PREVIEW_X,
@@ -545,4 +357,17 @@ uint8_t Tetris::getNextFigure() {
   _figures_bag[figure_index] = false;
 
   return figure_index;
+}
+
+cvec2 Tetris::transformPoint(const cvec2& pos, uint8_t rot, const cvec2& v) {
+  switch (rot) {
+    case 1:
+      return { v.x - pos.y, v.y + pos.x };
+    case 2:
+      return { v.x - pos.x, v.y - pos.y };
+    case 3:
+      return { v.x + pos.y, v.y - pos.x };
+    default:
+      return { v.x + pos.x, v.y + pos.y };
+  }
 }

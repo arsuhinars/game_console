@@ -17,11 +17,14 @@
 #define TETRIS_FIELD_HEIGHT   8
 
 // Позиция на экране окна с следующей фигурой
-#define TETRIS_PREVIEW_X      92
-#define TETRIS_PREVIEW_Y      8
+#define TETRIS_PREVIEW_X        92
+#define TETRIS_PREVIEW_Y        8
 // Размер этого окна в блоках
-#define TETRIS_PREVIEW_WIDTH  4
-#define TETRIS_PREVIEW_HEIGHT 4
+#define TETRIS_PREVIEW_WIDTH    3
+#define TETRIS_PREVIEW_HEIGHT   4
+// Расположение фигуры в этом окне
+#define TETRIS_PREVIEW_FIGURE_X 1
+#define TETRIS_PREVIEW_FIGURE_Y 1
 
 // Начальная позиция фигуры при её появлении
 #define TETRIS_INITIAL_FIGURE_X 3
@@ -57,8 +60,13 @@ private:
 
   uint8_t _curr_figure;       // Индекс текущей фигуры
   uint8_t _next_figure;       // Индекс следующей фигуры
-  uint8_t _curr_figure_rot;   // Поворот фигуры
+  uint8_t _figure_rot;        // Поворот фигуры
   utils::cvec2 _figure_pos;   // Её позиция на поле
+  bool was_dropped;           // Была ли сброшена фигура
+
+  // Границы предыдущей фигуры
+  utils::cvec2 _bound_min;
+  utils::cvec2 _bound_max;
 
   // "Сумка" с фигурами.
   bool _figures_bag[TETRIS_FIGURES_COUNT];
@@ -73,4 +81,7 @@ private:
   /// Получить индекс следующей случайной фигуры
   /// При этом фигура вынимается из "сумки"
   uint8_t getNextFigure();
+
+  /// Метод трансформации точки с учетом вращения
+  static utils::cvec2 transformPoint(const utils::cvec2& pos, uint8_t rot, const utils::cvec2& v);
 };
