@@ -75,7 +75,7 @@ bool Tetris::update() {
 
   // Если есть заполненные строчки
   if (
-    _disappearing_col < TETRIS_FIELD_WIDTH &&
+    _filled_rows_count > 0 &&
     millis() - _last_time >= TETRIS_DISAPPEAR_TIME / TETRIS_FIELD_WIDTH
   ) {
     _last_time = millis();
@@ -125,7 +125,7 @@ bool Tetris::update() {
           break;
         }
 
-        // Смещаем все фигуры до найденной строки
+        // Смещаем все блоки до найденной строки
         for (int8_t y = row; y >= 0; --y) {
           for (int8_t x = 0; x < TETRIS_FIELD_WIDTH; ++x) {
             _field[x][y] = y >= offset ? _field[x][y - offset] : false;
@@ -158,6 +158,33 @@ bool Tetris::update() {
         }
       }
 
+      // Начисляем игроку очки за заполенные строки
+      switch (_filled_rows_count) {
+        case 2:
+          _score += 3;
+        case 3:
+          _score += 7;
+        case 4:
+          _score += 15;
+        default:
+          _score += 1;
+      }
+
+      // Обновляем текст счета
+      display::oled.setCursorXY(
+        TETRIS_SCORE_X,
+        TETRIS_SCORE_Y + DISPLAY_FONT_HEIGHT
+      );
+      size_t length = display::oled.print(_score);
+      length += display::oled.print(F("00"));
+      // Обновляем область текста на экране
+      display::oled.update(
+        TETRIS_SCORE_X,
+        TETRIS_SCORE_Y + DISPLAY_FONT_HEIGHT,
+        TETRIS_SCORE_X + length * DISPLAY_FONT_WIDTH,
+        TETRIS_SCORE_Y + DISPLAY_FONT_HEIGHT * 2
+      );
+
       // Обновляем нужную область на экране
       display::oled.update(
         TETRIS_FIELD_X,
@@ -165,6 +192,9 @@ bool Tetris::update() {
         TETRIS_FIELD_X + TETRIS_FIELD_WIDTH * TETRIS_BLOCK_SIZE,
         TETRIS_FIELD_Y + TETRIS_FIELD_HEIGHT * TETRIS_BLOCK_SIZE
       );
+
+      // Сбрасываем заполненные строки
+      _filled_rows_count = 0;
     }
 
     ++_disappearing_col;
@@ -253,8 +283,8 @@ bool Tetris::update() {
   display::oled.update(
     TETRIS_FIELD_X + draw_bound_min.x * TETRIS_BLOCK_SIZE,
     TETRIS_FIELD_Y + draw_bound_min.y * TETRIS_BLOCK_SIZE,
-    TETRIS_FIELD_X + (draw_bound_max.x + 1) * TETRIS_BLOCK_SIZE,
-    TETRIS_FIELD_Y + (draw_bound_max.y + 1) * TETRIS_BLOCK_SIZE
+    TETRIS_FIELD_X + draw_bound_max.x * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE,
+    TETRIS_FIELD_Y + draw_bound_max.y * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE
   );
  
   if (is_dropped) {
@@ -285,6 +315,7 @@ bool Tetris::update() {
       _filled_rows[y] = is_filled;
       // Сбрасываем счетчик исчезающих столбцов
       if (is_filled) {
+        ++_filled_rows_count;
         _disappearing_col = 0;
       }
     }
@@ -298,8 +329,8 @@ bool Tetris::update() {
         display::oled.clear(
           TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE,
           TETRIS_FIELD_Y + pos.y * TETRIS_BLOCK_SIZE,
-          TETRIS_FIELD_X + (pos.x + 1) * TETRIS_BLOCK_SIZE - 1,
-          TETRIS_FIELD_Y + (pos.y + 1) * TETRIS_BLOCK_SIZE - 1
+          TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE - 1,
+          TETRIS_FIELD_Y + pos.y * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE - 1
         );
       }
     }
@@ -345,8 +376,6 @@ bool Tetris::update() {
 
     // Сдвигаем фигуру
     _figure_pos = new_figure_pos;
-    
-    return true;
   }
 
   // Если нажата кнопка вращения
@@ -405,6 +434,12 @@ void Tetris::startGame() {
     TETRIS_PREVIEW_Y + TETRIS_PREVIEW_HEIGHT * TETRIS_BLOCK_SIZE,
     OLED_STROKE
   );
+  // Рисуем текст с очками игрока
+  display::oled.textMode(BUF_REPLACE);
+  display::oled.setScale(1);
+  display::oled.setCursorXY(TETRIS_SCORE_X, TETRIS_SCORE_Y);
+  display::oled.println(FPSTR(texts::SCORE));
+  display::oled.print('0');
 
   // Очищаем поле
   for (int8_t x = 0; x < TETRIS_FIELD_WIDTH; ++x) {
@@ -428,7 +463,7 @@ void Tetris::startGame() {
   _figure_rot = 0;
   _figure_pos = { TETRIS_INITIAL_FIGURE_X, TETRIS_INITIAL_FIGURE_Y };
   _was_dropped = true;
-  _disappearing_col = TETRIS_FIELD_WIDTH;
+  _filled_rows_count = 0;
 
   drawFigurePreview();
 

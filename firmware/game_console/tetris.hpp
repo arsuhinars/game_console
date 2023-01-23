@@ -42,6 +42,10 @@
 #define TETRIS_FIGURE_O       6
 #define TETRIS_FIGURES_COUNT  7
 
+// Позиция текста с счетчиком очков на экране
+#define TETRIS_SCORE_X        0
+#define TETRIS_SCORE_Y        0
+
 class Tetris : public Game {
 public:
   explicit Tetris();
@@ -76,6 +80,8 @@ private:
 
   // Полностью заполенные строки
   bool _filled_rows[TETRIS_FIELD_HEIGHT];
+  // Кол-во заполненных строк
+  uint8_t _filled_rows_count;
   // Текущий исчезающий столбец
   uint8_t _disappearing_col;
 
