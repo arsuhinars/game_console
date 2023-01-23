@@ -366,8 +366,12 @@ uint8_t Tetris::getNextFigure() {
   }
 
   uint8_t figure_offset = random(0, _figures_in_bag);
+  uint8_t offset = 0;
+  uint8_t figure_index;
+  for (uint8_t i = 0; offset <= figure_offset; ++i) {
     if (_figures_bag[i]) {
-      ++figure_index;
+      ++offset;
+      figure_index = i;
     }
   }
 
