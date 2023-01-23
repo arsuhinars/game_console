@@ -3,6 +3,7 @@
 #include "display.hpp"
 #include "controls.hpp"
 #include "texts.hpp"
+#include "utils.hpp"
 #include "tetris.hpp"
 
 // Координаты поля на экране
@@ -261,7 +262,6 @@ bool Tetris::update() {
         pos.x >= TETRIS_FIELD_WIDTH ||
         pos.x < 0 ||
         pos.y >= TETRIS_FIELD_HEIGHT ||
-        pos.y < 0 ||
         _field[pos.x][pos.y]
       ) {
         return true;
