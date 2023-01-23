@@ -20,7 +20,7 @@ using namespace utils;
 
 // Спрайт блока
 const uint8_t TETRIS_BLOCK[] PROGMEM = {
-	0x00, 0x7E, 0x42, 0x5A, 0x5A, 0x42, 0x7E, 0x00, 
+	0x03, 0x03, 0x00,
 };
 
 // Тип для описания фигуры. Представляет из себя массив с координатами
@@ -42,7 +42,7 @@ const TetrisFigure TETRIS_FIGURES[TETRIS_FIGURES_COUNT] PROGMEM = {
   // Фигура I
   { { 0, -1 }, { 0, 0 }, { 0, 1 }, { 0, 2 } },
   // Фигура O
-  { { -1, -1 }, { 0, -1 }, { 0, 0 }, { -1, 0 } }
+  { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } }
 };
 
 const char* const TETRIS_MENU_ITEMS[] PROGMEM = {

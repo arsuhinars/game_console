@@ -10,25 +10,25 @@
 #define TETRIS_FAST_UPDATE_STEP 100
 
 // Размер одного блока в пикселях
-#define TETRIS_BLOCK_SIZE     8
+#define TETRIS_BLOCK_SIZE     3
 
 // Ширина и высота поля в блоках
-#define TETRIS_FIELD_WIDTH    6
-#define TETRIS_FIELD_HEIGHT   8
+#define TETRIS_FIELD_WIDTH    10
+#define TETRIS_FIELD_HEIGHT   20
 
 // Позиция на экране окна с следующей фигурой
-#define TETRIS_PREVIEW_X        92
+#define TETRIS_PREVIEW_X        100
 #define TETRIS_PREVIEW_Y        8
 // Размер этого окна в блоках
-#define TETRIS_PREVIEW_WIDTH    3
-#define TETRIS_PREVIEW_HEIGHT   4
+#define TETRIS_PREVIEW_WIDTH    5
+#define TETRIS_PREVIEW_HEIGHT   6
 // Расположение фигуры в этом окне
-#define TETRIS_PREVIEW_FIGURE_X 1
-#define TETRIS_PREVIEW_FIGURE_Y 1
+#define TETRIS_PREVIEW_FIGURE_X 2
+#define TETRIS_PREVIEW_FIGURE_Y 2
 
 // Начальная позиция фигуры при её появлении
-#define TETRIS_INITIAL_FIGURE_X 3
-#define TETRIS_INITIAL_FIGURE_Y 1
+#define TETRIS_INITIAL_FIGURE_X 5
+#define TETRIS_INITIAL_FIGURE_Y 0
 
 // Индексы каждой из фигур
 #define TETRIS_FIGURE_L       0
