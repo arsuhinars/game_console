@@ -143,11 +143,11 @@ bool Tetris::update() {
     }
   }
 
-  if (was_dropped) {
+  if (_was_dropped) {
     draw_bound_min = _bound_min;
     draw_bound_max = _bound_max;
   }
-  was_dropped = is_dropped;
+  _was_dropped = is_dropped;
 
   // Обновляем только изменившуюся область
   display::oled.update(
@@ -296,7 +296,7 @@ void Tetris::startGame() {
   _next_figure = getNextFigure();
   _figure_rot = 0;
   _figure_pos = { TETRIS_INITIAL_FIGURE_X, TETRIS_INITIAL_FIGURE_Y };
-  was_dropped = true;
+  _was_dropped = true;
 
   drawFigurePreview();
 

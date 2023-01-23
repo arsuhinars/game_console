@@ -62,7 +62,7 @@ private:
   uint8_t _next_figure;       // Индекс следующей фигуры
   uint8_t _figure_rot;        // Поворот фигуры
   utils::cvec2 _figure_pos;   // Её позиция на поле
-  bool was_dropped;           // Была ли сброшена фигура
+  bool _was_dropped;          // Была ли сброшена фигура
 
   // Границы предыдущей фигуры
   utils::cvec2 _bound_min;
