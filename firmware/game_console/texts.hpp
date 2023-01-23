@@ -26,4 +26,7 @@ namespace texts {
   // Текст для игры Dino
   extern const char START_HINT[] PROGMEM;
   extern const char EXIT_HINT[] PROGMEM;
+
+  // Текст для игры Тетрис
+  extern const char SCORE[] PROGMEM;
 } // namespace texts

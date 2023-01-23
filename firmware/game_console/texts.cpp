@@ -22,3 +22,6 @@ const char texts::DRAW[] PROGMEM = "Ничья";
 // Текст для игры Dino
 const char texts::START_HINT[] PROGMEM = "A/UP - играть";
 const char texts::EXIT_HINT[] PROGMEM = "B - выйти";
+
+// Текст для игры Тетрис
+const char texts::SCORE[] PROGMEM = "Счет";
