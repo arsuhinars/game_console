@@ -117,7 +117,7 @@ bool Tetris::update() {
     }
 
     // Если блок уже занят
-    if (_field[pos.x][pos.y]) {
+    if (pos.y >= 0 && _field[pos.x][pos.y]) {
       // Игрок проиграл
       _is_game_started = false;
       _menu.setTitle(FPSTR(texts::YOU_LOSE));
@@ -158,6 +158,12 @@ bool Tetris::update() {
   );
  
   if (is_dropped) {
+    // Заполняем блоки фигуры на поле
+    for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
+      auto pos = transformPoint(_figure_pos, _figure_rot, figure[i]);
+      _field[pos.x][pos.y] = true;
+    }
+
     // Оставляем фигуру и берем следующую
     _figure_pos = { TETRIS_INITIAL_FIGURE_X, TETRIS_INITIAL_FIGURE_Y };
     _figure_rot = 0;
@@ -176,22 +182,23 @@ bool Tetris::update() {
     // Очищаем фигуру
     for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
       auto pos = transformPoint(_figure_pos, _figure_rot, figure[i]);
-      display::oled.clear(
-        TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE,
-        TETRIS_FIELD_Y + pos.y * TETRIS_BLOCK_SIZE,
-        TETRIS_FIELD_X + (pos.x + 1) * TETRIS_BLOCK_SIZE - 1,
-        TETRIS_FIELD_Y + (pos.y + 1) * TETRIS_BLOCK_SIZE - 1
-      );
+      if (pos.y >= 0) {
+        display::oled.clear(
+          TETRIS_FIELD_X + pos.x * TETRIS_BLOCK_SIZE,
+          TETRIS_FIELD_Y + pos.y * TETRIS_BLOCK_SIZE,
+          TETRIS_FIELD_X + (pos.x + 1) * TETRIS_BLOCK_SIZE - 1,
+          TETRIS_FIELD_Y + (pos.y + 1) * TETRIS_BLOCK_SIZE - 1
+        );
+      }
     }
-  }
 
   // Тип перемещения. 0 - нет, 1 - влево, 2 - вправо
   uint8_t move_type = 0;
   
   // Если нажата кнопка движения
-  if (controls::left_button.press()) {
+  if (controls::left_button.press() || controls::left_button.state()) {
     move_type = 1;
-  } else if (controls::right_button.press()) {
+  } else if (controls::right_button.press() || controls::right_button.state()) {
     move_type = 2;
   }
 
@@ -227,7 +234,16 @@ bool Tetris::update() {
   }
 
   // Если нажата кнопка вращения
-  if (controls::button_a.press()) {
+  if (controls::button_a.press() || controls::button_a.state()) {
+    uint8_t figure_rotations = TETRIS_FIGURE_ROTATIONS;
+    // Добавляем ограничения на вращения определенных фигур
+    switch (_curr_figure) {
+      case TETRIS_FIGURE_I:
+        figure_rotations = 2;
+      case TETRIS_FIGURE_O:
+        figure_rotations = 1;
+    }
+
     // Проверяем новую фигуру
     for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
       auto pos = transformPoint(
@@ -235,7 +251,7 @@ bool Tetris::update() {
         (_figure_rot + 1) % TETRIS_FIGURE_ROTATIONS,
         figure[i]
       );
-
+      
       // Если новая фигура вышла за границу или столкнулась с блоками на поле
       if (
         pos.x >= TETRIS_FIELD_WIDTH ||
@@ -314,7 +330,7 @@ void Tetris::drawFigurePreview() {
     TETRIS_PREVIEW_X,
     TETRIS_PREVIEW_Y,
     TETRIS_PREVIEW_X + TETRIS_PREVIEW_WIDTH * TETRIS_BLOCK_SIZE - 1,
-    TETRIS_PREVIEW_Y + TETRIS_FIELD_HEIGHT * TETRIS_BLOCK_SIZE - 1
+    TETRIS_PREVIEW_Y + TETRIS_PREVIEW_HEIGHT * TETRIS_BLOCK_SIZE - 1
   );
 
   // Рисуем блоки данной фигуры
@@ -345,9 +361,7 @@ uint8_t Tetris::getNextFigure() {
     }
   }
 
-  uint8_t figure_place = random(0, _figures_in_bag);
-  uint8_t figure_index = 0;
-  for (uint8_t i = 0; figure_index < figure_place; ++i) {
+  uint8_t figure_offset = random(0, _figures_in_bag);
     if (_figures_bag[i]) {
       ++figure_index;
     }
@@ -362,12 +376,12 @@ uint8_t Tetris::getNextFigure() {
 cvec2 Tetris::transformPoint(const cvec2& pos, uint8_t rot, const cvec2& v) {
   switch (rot) {
     case 1:
-      return { v.x - pos.y, v.y + pos.x };
+      return { pos.x - v.y, pos.y + v.x };
     case 2:
-      return { v.x - pos.x, v.y - pos.y };
+      return { pos.x - v.x, pos.y - v.y };
     case 3:
-      return { v.x + pos.y, v.y - pos.x };
+      return { pos.x + v.y, pos.y - v.x };
     default:
-      return { v.x + pos.x, v.y + pos.y };
+      return { pos.x + v.x, pos.y + v.y };
   }
 }
