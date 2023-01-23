@@ -8,6 +8,8 @@
 #define TETRIS_UPDATE_STEP      300
 // Время быстрого шага
 #define TETRIS_FAST_UPDATE_STEP 100
+// Время полного исчезновения фигур
+#define TETRIS_DISAPPEAR_TIME   500
 
 // Размер одного блока в пикселях
 #define TETRIS_BLOCK_SIZE     3
@@ -71,6 +73,11 @@ private:
   // "Сумка" с фигурами.
   bool _figures_bag[TETRIS_FIGURES_COUNT];
   uint8_t _figures_in_bag;    // Кол-во оставшихся фигур в сумке
+
+  // Полностью заполенные строки
+  bool _filled_rows[TETRIS_FIELD_HEIGHT];
+  // Текущий исчезающий столбец
+  uint8_t _disappearing_col;
 
   /// Метод запуска игры
   void startGame();

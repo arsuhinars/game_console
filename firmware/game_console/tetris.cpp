@@ -73,6 +73,105 @@ bool Tetris::update() {
     return true;
   }
 
+  // Если есть заполненные строчки
+  if (
+    _disappearing_col < TETRIS_FIELD_WIDTH &&
+    millis() - _last_time >= TETRIS_DISAPPEAR_TIME / TETRIS_FIELD_WIDTH
+  ) {
+    _last_time = millis();
+
+    // Очищаем заполненные строки по одному столбцу
+    for (uint8_t i = 0; i < TETRIS_FIELD_HEIGHT; ++i) {
+      if (!_filled_rows[i]) {
+        continue;
+      }
+
+      display::oled.clear(
+        TETRIS_FIELD_X + _disappearing_col * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_Y + i * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_X + _disappearing_col * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE - 1,
+        TETRIS_FIELD_Y + i * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE - 1
+      );
+      display::oled.update(
+        TETRIS_FIELD_X + _disappearing_col * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_Y + i * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_X + _disappearing_col * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_Y + i * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE
+      );
+    }
+
+    // Если дошли до конца
+    if (_disappearing_col == TETRIS_FIELD_WIDTH - 1) {
+      uint8_t last_row = 0;
+      while (true) {
+        // Ищем следующую заполненную строку
+        uint8_t offset = 1;
+        uint8_t row = TETRIS_FIELD_HEIGHT;
+        for (uint8_t i = last_row; i < TETRIS_FIELD_HEIGHT; ++i) {
+          if (_filled_rows[i]) {
+            // Если строки идут подряд, то просто увеличиваем смещение
+            if (i + 1 < TETRIS_FIELD_HEIGHT && _filled_rows[i + 1]) {
+              ++offset;
+              continue;
+            }
+
+            row = i;
+            break;
+          }
+        }
+
+        // Если обошли все строчки
+        if (row == TETRIS_FIELD_HEIGHT) {
+          break;
+        }
+
+        // Смещаем все фигуры до найденной строки
+        for (int8_t y = row; y >= 0; --y) {
+          for (int8_t x = 0; x < TETRIS_FIELD_WIDTH; ++x) {
+            _field[x][y] = y >= offset ? _field[x][y - offset] : false;
+          }
+        }
+
+        last_row = row + 1;
+      }
+
+      // Отрисовываем все поле заново
+      for (uint8_t x = 0; x < TETRIS_FIELD_WIDTH; ++x) {
+        for (uint8_t y = 0; y < TETRIS_FIELD_HEIGHT; ++y) {
+          if (_field[x][y]) {
+            // Рисуем текущий блок
+            display::oled.drawBitmap(
+              TETRIS_FIELD_X + x * TETRIS_BLOCK_SIZE,
+              TETRIS_FIELD_Y + y * TETRIS_BLOCK_SIZE,
+              TETRIS_BLOCK,
+              TETRIS_BLOCK_SIZE, TETRIS_BLOCK_SIZE
+            );
+          } else {
+            // Очищаем его, если он пустой
+            display::oled.clear(
+              TETRIS_FIELD_X + x * TETRIS_BLOCK_SIZE,
+              TETRIS_FIELD_Y + y * TETRIS_BLOCK_SIZE,
+              TETRIS_FIELD_X + x * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE - 1,
+              TETRIS_FIELD_Y + y * TETRIS_BLOCK_SIZE + TETRIS_BLOCK_SIZE - 1
+            );
+          }
+        }
+      }
+
+      // Обновляем нужную область на экране
+      display::oled.update(
+        TETRIS_FIELD_X,
+        TETRIS_FIELD_Y,
+        TETRIS_FIELD_X + TETRIS_FIELD_WIDTH * TETRIS_BLOCK_SIZE,
+        TETRIS_FIELD_Y + TETRIS_FIELD_HEIGHT * TETRIS_BLOCK_SIZE
+      );
+    }
+
+    ++_disappearing_col;
+
+    return true;
+  }
+
   // Обновляем игру только тогда, когда это необходимо
   if (millis() - _last_time <= (controls::down_button.state() ? TETRIS_FAST_UPDATE_STEP : TETRIS_UPDATE_STEP)) {
     return true;
@@ -172,10 +271,22 @@ bool Tetris::update() {
     _next_figure = getNextFigure();
     drawFigurePreview();
 
-    // Заполняем блоки фигуры на поле
-    for (uint8_t i = 0; i < TETRIS_FIGURE_BLOCKS_COUNT; ++i) {
-      auto pos = transformPoint(_figure_pos, _figure_rot, figure[i]);
-      _field[pos.x][pos.y] = true;
+    // Ищем заполненные строки
+    for (uint8_t y = _bound_min.y; y <= _bound_max.y; ++y) {
+      bool is_filled = true;
+      for (uint8_t x = 0; x < TETRIS_FIELD_WIDTH; ++x) {
+        if (!_field[x][y]) {
+          is_filled = false;
+          break;
+        }
+      }
+
+      // Записываем эти строки в массиве
+      _filled_rows[y] = is_filled;
+      // Сбрасываем счетчик исчезающих столбцов
+      if (is_filled) {
+        _disappearing_col = 0;
+      }
     }
 
     return true;
@@ -317,6 +428,7 @@ void Tetris::startGame() {
   _figure_rot = 0;
   _figure_pos = { TETRIS_INITIAL_FIGURE_X, TETRIS_INITIAL_FIGURE_Y };
   _was_dropped = true;
+  _disappearing_col = TETRIS_FIELD_WIDTH;
 
   drawFigurePreview();
 
