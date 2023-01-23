@@ -71,9 +71,9 @@ bool Tetris::update() {
 
     return true;
   }
-  
+
   // Обновляем игру только тогда, когда это необходимо
-  if (millis() - _last_time <= controls::down_button.state() ? TETRIS_FAST_UPDATE_STEP : TETRIS_UPDATE_STEP) {
+  if (millis() - _last_time <= (controls::down_button.state() ? TETRIS_FAST_UPDATE_STEP : TETRIS_UPDATE_STEP)) {
     return true;
   }
   _last_time = millis();
