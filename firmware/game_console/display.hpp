@@ -7,6 +7,9 @@
 #define DISPLAY_WIDTH     128
 #define DISPLAY_HEIGHT    64
 
+// Яркость по умолчанию
+#define DISPLAY_BRIGHTNESS  127
+
 // Размеры шрифта на экране
 #define DISPLAY_FONT_WIDTH  6
 #define DISPLAY_FONT_HEIGHT 8
